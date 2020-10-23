@@ -47,6 +47,7 @@ let polaroid;
 let polaroidIdle;
 let polaroidBlep;
 
+// noinspection JSUnusedGlobalSymbols
 function preload() {
     sticksHeld = loadImage("assets\\chopsticks-hold.png");
     sticksIdle = loadImage("assets\\chopsticks-idle.png");
@@ -55,7 +56,6 @@ function preload() {
     catWalkRight = [loadImage("assets\\kitten-side-1.png"), loadImage("assets\\kitten-side-2.png")];
     catWalkUp = [loadImage("assets\\kitten-up-1.png"), loadImage("assets\\kitten-up-2.png")];
     polaroid = loadImage("assets\\polaroid.png", loadPolaroidImages);
-
 
     // loadImage("assets\\_title.png");
     // loadImage("assets\\kitten-lie-1.png");
@@ -72,6 +72,7 @@ function loadPolaroidImages() {
     polaroidBlep = polaroid.get(90,0,89,84);
 }
 
+// noinspection JSUnusedGlobalSymbols
 function setup() {
     mainCanvas = createCanvas(1366, 768, P2D);
     frameRate(60);
@@ -89,16 +90,7 @@ function setup() {
     generateCats();
 }
 
-function updateCursor() {
-    mouseIsInsidePolaroid = dist(mouseX, mouseY, polaroidPos.x, polaroidPos.y) < polaroidHitRadius * .5;
-}
-
-function updateHoldState() {
-    if (held != null && !mouseIsPressed) {
-        drop();
-    }
-}
-
+// noinspection JSUnusedGlobalSymbols
 function draw() {
     mainCanvas.position((windowWidth - width) / 2, (windowHeight - height) / 2);
     t = radians(frameCount);
@@ -248,6 +240,10 @@ function drawPolaroidButton() {
     pg.pop();
 }
 
+function updateCursor() {
+    mouseIsInsidePolaroid = dist(mouseX, mouseY, polaroidPos.x, polaroidPos.y) < polaroidHitRadius * .5;
+}
+
 function drawCursor() {
     if (mouseIsInsidePolaroid && areAllCatsInsideTarget()) {
         if (polaroidLoadingAnimation > 0 && polaroidLoadingAnimation < 1) {
@@ -276,6 +272,7 @@ function drawCursor() {
     pg.pop();
 }
 
+// noinspection JSUnusedGlobalSymbols
 function mousePressed() {
     if (gameState === 'play' && polaroidLoadingAnimation >= 1 && mouseIsInsidePolaroid) {
         winGame();
@@ -284,6 +281,7 @@ function mousePressed() {
     }
 }
 
+// noinspection JSUnusedGlobalSymbols
 function mouseReleased() {
     drop();
 }
@@ -296,6 +294,12 @@ function winGame() {
 function restartGame() {
     generateCats();
     gameState = 'play';
+}
+
+function updateHoldState() {
+    if (held != null && !mouseIsPressed) {
+        drop();
+    }
 }
 
 function drop() {
