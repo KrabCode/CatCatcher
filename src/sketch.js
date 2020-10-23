@@ -1,3 +1,5 @@
+
+let mainCanvas;
 let pg;
 
 let t = 0;
@@ -37,18 +39,41 @@ let catCountInsideTargetLerp = 0;
 let catHeld;
 let sticksIdle;
 let sticksHeld;
-let catDown;
-let catRight;
-let catUp;
+let catWalkDown;
+let catWalkRight;
+let catWalkUp;
+
+let polaroid;
 let polaroidIdle;
 let polaroidBlep;
 
 function preload() {
+    sticksHeld = loadImage("assets\\chopsticks-hold.png");
+    sticksIdle = loadImage("assets\\chopsticks-idle.png");
+    catHeld =    loadImage("assets\\kitten-held.png");
+    catWalkDown = [loadImage("assets\\kitten-down-1.png"), loadImage("assets\\kitten-down-2.png")];
+    catWalkRight = [loadImage("assets\\kitten-side-1.png"), loadImage("assets\\kitten-side-2.png")];
+    catWalkUp = [loadImage("assets\\kitten-up-1.png"), loadImage("assets\\kitten-up-2.png")];
+    polaroid = loadImage("assets\\polaroid.png", loadPolaroidImages);
 
+
+    // loadImage("assets\\_title.png");
+    // loadImage("assets\\kitten-lie-1.png");
+    // loadImage("assets\\kitten-lie-2.png");
+    // loadImage("assets\\kitten-sit-1.png");
+    // loadImage("assets\\kitten-sit-2.png");
+    // loadImage("assets\\kitten-sit-hat.png");
+    // loadImage("assets\\kitten-sleep-1.png");
+    // loadImage("assets\\kitten-sleep-2.png");
+}
+
+function loadPolaroidImages() {
+    polaroidIdle = polaroid.get(0,0,89,84);
+    polaroidBlep = polaroid.get(90,0,89,84);
 }
 
 function setup() {
-    createCanvas(1366, 768, P2D);
+    mainCanvas = createCanvas(1366, 768, P2D);
     frameRate(60);
     noSmooth();
     colorMode(HSB, 1, 1, 1, 1);
@@ -75,6 +100,7 @@ function updateHoldState() {
 }
 
 function draw() {
+    mainCanvas.position((windowWidth - width) / 2, (windowHeight - height) / 2);
     t = radians(frameCount);
     drawBackground();
     updatePolaroidButton();
@@ -425,11 +451,11 @@ class Cat {
             return catHeld;
         }
         if (this.direction === 0 || this.direction === 2) {
-            return catRight[frame];
+            return catWalkRight[frame];
         } else if (this.direction === 1) {
-            return catDown[frame];
+            return catWalkDown[frame];
         } else if (this.direction === 3) {
-            return catUp[frame];
+            return catWalkUp[frame];
         }
         return catHeld;
     }
