@@ -148,34 +148,33 @@ function drawIntro() {
 }
 
 function updateDrawIntroPlayButton() {
-    let clicked = updateDrawButton(width * .5, height *.75, 300, 100, 'play');
-    if(clicked) {
+    let clicked = updateDrawButton(width * .5, height * .75, 300, 100, 'play');
+    if (clicked) {
         restartGame();
     }
 }
 
 function updateDrawPlayAgainButton() {
-    let clicked = updateDrawButton(width * .5, height *.9, 300, 100, 'play again');
-    if(clicked) {
+    let clicked = updateDrawButton(width * .5, height * .9, 300, 100, 'play again');
+    if (clicked) {
         restartGame();
     }
 }
 
-function updateDrawButton(x,y,w,h,label)
-{
+function updateDrawButton(x, y, w, h, label) {
     let clicked = false;
     pg.push();
     pg.noStroke();
     pg.fill(grayscaleInteractive);
-    let hover = pointRect(mouseX, mouseY, x - w * .5,y - h*.5, w, h);
-    if(hover) {
+    let hover = pointRect(mouseX, mouseY, x - w * .5, y - h * .5, w, h);
+    if (hover) {
         cursor('pointer');
     }
-    if(hover && mouseIsPressed && !pmouseIsPressed) {
+    if (hover && mouseIsPressed && !pmouseIsPressed) {
         clicked = true;
     }
     pg.translate(x, y);
-    if(hover) {
+    if (hover) {
         pg.stroke(grayscaleWhite);
         pg.strokeWeight(3);
     }
@@ -194,7 +193,7 @@ function drawCongratsMessage() {
     pg.push();
     let message = 'You win! You took a photo of all ' + catCount + ' cats!'
     pg.fill(grayscaleWhite);
-    pg.translate(width*.5, height*.1);
+    pg.translate(width * .5, height * .1);
     pg.textAlign(CENTER, CENTER);
     pg.textStyle(BOLD);
     pg.textSize(50);
@@ -324,9 +323,10 @@ function drawPolaroidButton() {
 }
 
 let useImageCursor;
+
 function updateCursor() {
     cursor(ARROW);
-    if(gameState === 'play') {
+    if (gameState === 'play') {
         mouseIsInsidePolaroid = dist(mouseX, mouseY, polaroidPos.x, polaroidPos.y) < polaroidHitRadius * .5;
         useImageCursor = true;
         if (mouseIsInsidePolaroid && areAllCatsInsideTarget()) {
@@ -342,7 +342,7 @@ function updateCursor() {
 }
 
 function drawCursor() {
-    if(!useImageCursor) {
+    if (!useImageCursor) {
         return;
     }
     noCursor();
@@ -423,11 +423,10 @@ function clamp(val, low, high) {
 }
 
 // adapted from the amazing jeffrey thompson: http://www.jeffreythompson.org/collision-detection/point-rect.php
-function pointRect(px, py, rx, ry, rw, rh)
-{
-    return(px >= rx     &&
-        px <= rx + rw   &&
-        py >= ry        &&
+function pointRect(px, py, rx, ry, rw, rh) {
+    return (px >= rx &&
+        px <= rx + rw &&
+        py >= ry &&
         py <= ry + rh);
 }
 
@@ -447,9 +446,10 @@ class Cat {
         this.pos = createVector(random(width), random(height));
         this.stance = 0;
         this.stanceStableMinimumFrames = 360;
-        this.stanceChangedFrame = -this.stanceStableMinimumFrames*2;
+        this.stanceChangedFrame = -this.stanceStableMinimumFrames * 2;
         this.direction = floor(random(4));
         this.size = 62 * imageScale;
+        this.interactionDist = this.size * .5;
         this.hue = (.7 + random(.4)) % 1;
         this.sat = random(.15, .4);
         this.br = random(.8, 1);
@@ -459,11 +459,11 @@ class Cat {
 
     updateDraw() {
         this.mouseInteract();
-        if(this.isHeld()) {
-          this.stance = 0;
+        if (this.isHeld()) {
+            this.stance = 0;
         } else {
             this.updateStance();
-            if(this.isInMovingStance()) {
+            if (this.isInMovingStance()) {
                 this.updateDirection();
                 this.move();
                 this.checkCollisions();
@@ -490,11 +490,11 @@ class Cat {
             return;
         }
         let rand = random(1);
-        if(rand < 0.5) {
+        if (rand < 0.5) {
             // sit up or stand up
             this.stance--;
             this.stanceChangedFrame = frameCount;
-        }else if(rand > .9) {
+        } else if (rand > .9) {
             // sit down or start sleeping when sitting already
             this.stance++;
             this.stanceChangedFrame = frameCount;
@@ -552,7 +552,7 @@ class Cat {
         pg.push();
         let frame = sin(t * 8 + this.timeOffset) > 0 ? 0 : 1;
         let flipHorizontally = this.direction === 2 && !this.isHeld();
-        let img = this.getImageByStateAndStance(frame);
+        let img = this.currentImage(frame);
         pg.tint(this.hue, this.sat, this.br);
         this.drawCatAtPos(img, flipHorizontally);
         this.drawCatWrapAround(img, flipHorizontally);
@@ -570,37 +570,59 @@ class Cat {
     drawCatWrapAround(img, flipHorizontally) {
         pg.push();
         pg.translate(this.pos.x, this.pos.y);
-        if (this.pos.x < this.size / 2) {
-            pg.translate(width, 0);
+        let leftBorder = this.pos.x < this.size / 2;
+        let rightBorder = this.pos.x > width - this.size / 2;
+        let topBorder = this.pos.y < this.size / 2;
+        let bottomBorder = this.pos.y > height - this.size / 2;
+        if (leftBorder) {
+            this.drawCatWithOffset(img, flipHorizontally, width, 0);
+            if (topBorder) {
+                this.drawCatWithOffset(img, flipHorizontally, width, height);
+            }
+            if (bottomBorder) {
+                this.drawCatWithOffset(img, flipHorizontally, width, -height);
+            }
         }
-        if (this.pos.x > width - this.size / 2) {
-            pg.translate(-width, 0);
+        if (rightBorder) {
+            this.drawCatWithOffset(img, flipHorizontally, -width, 0);
+            if (topBorder) {
+                this.drawCatWithOffset(img, flipHorizontally, -width, height);
+            }
+            if (bottomBorder) {
+                this.drawCatWithOffset(img, flipHorizontally, -width, -height);
+            }
         }
-        if (this.pos.y < this.size / 2) {
-            pg.translate(0, height);
+        if (topBorder) {
+            this.drawCatWithOffset(img, flipHorizontally, 0, height);
         }
-        if (this.pos.y > height - this.size / 2) {
-            pg.translate(0, -height);
+        if (bottomBorder) {
+            this.drawCatWithOffset(img, flipHorizontally, 0, -height);
         }
+        pg.pop();
+    }
+
+    drawCatWithOffset(img, flipHorizontally, x, y) {
+        pg.push();
+        pg.translate(x, y);
         this.flipIfNeeded(flipHorizontally);
         pg.image(img, 0, 0, this.size, this.size);
         pg.pop();
     }
 
-    getImageByStateAndStance(frame) {
+    currentImage(frame) {
         if (this.isHeld()) {
             return catHeld;
         }
-        if(this.isInMovingStance()) {
+        if (this.isInMovingStance()) {
             if (this.direction === 0 || this.direction === 2) {
                 return catWalkRight[frame];
             } else if (this.direction === 1) {
                 return catWalkDown[frame];
             }
             return catWalkUp[frame];
-        }else if(this.isInSittingStance()) {
+        } else if (this.isInSittingStance()) {
             return catSit[frame];
-        }else if(this.isInSleepingStance()) {
+        } else if (this.isInSleepingStance()) {
             return catSleep[frame];
         }
         console.info(this.stance);
@@ -623,30 +645,41 @@ class Cat {
     }
 
     mouseInteract() {
-        let interactionDist = this.size * .5;
-        let isOverCatButAcrossTheScreen = false;
         let interactionWorldWrapTeleportX = 0;
         let interactionWorldWrapTeleportY = 0;
-        let isDirectlyOverCat = dist(mouseX, mouseY, this.pos.x, this.pos.y) < interactionDist;
-        if (!isDirectlyOverCat) {
-            if (dist(mouseX + width, mouseY, this.pos.x, this.pos.y) < interactionDist) {
-                interactionWorldWrapTeleportX -= width;
+        if (held == null) {
+            let isOverCatButAcrossTheScreen = false;
+            let isDirectlyOverCat = this.isMouseOverCatWithOffset(0, 0);
+            if (!isDirectlyOverCat) {
                 isOverCatButAcrossTheScreen = true;
-            } else if (dist(mouseX - width, mouseY, this.pos.x, this.pos.y) < interactionDist) {
-                interactionWorldWrapTeleportX += width;
-                isOverCatButAcrossTheScreen = true;
+                if (this.isMouseOverCatWithOffset(width, 0)) {
+                    interactionWorldWrapTeleportX += -width;
+                } else if (this.isMouseOverCatWithOffset(-width, 0)) {
+                    interactionWorldWrapTeleportX += width;
+                } else if (this.isMouseOverCatWithOffset(0, height)) {
+                    interactionWorldWrapTeleportY += -height;
+                } else if (this.isMouseOverCatWithOffset(0, -height)) {
+                    interactionWorldWrapTeleportY += height;
+                } else if (this.isMouseOverCatWithOffset(width, height)) {
+                    interactionWorldWrapTeleportX += -width;
+                    interactionWorldWrapTeleportY += -height;
+                } else if (this.isMouseOverCatWithOffset(-width, height)) {
+                    interactionWorldWrapTeleportX += width;
+                    interactionWorldWrapTeleportY += -height;
+                } else if (this.isMouseOverCatWithOffset(width, -height)) {
+                    interactionWorldWrapTeleportX += -width;
+                    interactionWorldWrapTeleportY += height;
+                } else if (this.isMouseOverCatWithOffset(-width, -height)) {
+                    interactionWorldWrapTeleportX += width;
+                    interactionWorldWrapTeleportY += height;
+                } else {
+                    isOverCatButAcrossTheScreen = false;
+                }
             }
-            if (dist(mouseX, mouseY + height, this.pos.x, this.pos.y) < interactionDist) {
-                interactionWorldWrapTeleportY -= height;
-                isOverCatButAcrossTheScreen = true;
-            } else if (dist(mouseX, mouseY - height, this.pos.x, this.pos.y) < interactionDist) {
-                interactionWorldWrapTeleportY += height;
-                isOverCatButAcrossTheScreen = true;
+            let isOverCatWorldWrapAware = isDirectlyOverCat || isOverCatButAcrossTheScreen;
+            if (held == null && mouseIsPressed && isOverCatWorldWrapAware) {
+                held = this;
             }
-        }
-        let isOverCatWorldWrapAware = isDirectlyOverCat || isOverCatButAcrossTheScreen;
-        if (held === null && mouseIsPressed && isOverCatWorldWrapAware) {
-            held = this;
         }
         if (held != null && held.id === this.id) {
             this.pos.x += interactionWorldWrapTeleportX;
@@ -654,6 +687,10 @@ class Cat {
             this.pos.x = lerp(this.pos.x, mouseX, .35);
             this.pos.y = lerp(this.pos.y, mouseY, .35);
         }
+    }
+
+    isMouseOverCatWithOffset(x, y) {
+        return dist(mouseX + x, mouseY + y, this.pos.x, this.pos.y) < this.interactionDist;
     }
 
     checkCollisions() {
