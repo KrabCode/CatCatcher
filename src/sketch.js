@@ -166,13 +166,13 @@ function updateDrawSettings() {
     let difficultyIndicator = 'difficulty: ';
     if(catCount < 10) {
         difficultyIndicator += 'easy';
-    }else if(catCount < 20) {
+    }else if(catCount < 16) {
         difficultyIndicator += 'normal';
     }else {
         difficultyIndicator += 'hard';
     }
     pg.textAlign(LEFT, CENTER);
-    pg.text(difficultyIndicator, width * .1, height * .8);
+    pg.text(difficultyIndicator, width * .1, height * .82);
     pg.pop();
 }
 
@@ -414,7 +414,7 @@ function mouseReleased() {
 }
 
 function winGame() {
-    winningPolaroidAngle = random(-PI * .025, PI * .025);
+    winningPolaroidAngle = random(-PI * .05, PI * .05);
     winningPolaroidImage = pg.get(targetRectPos.x - targetRectSize.x * .5, targetRectPos.y - targetRectSize.y * .5, targetRectSize.x, targetRectSize.y);
     let newWinMessage = 'You win!\n';
     if(catCount === 1) {
@@ -422,11 +422,12 @@ function winGame() {
     }
     if(catCount > 1) {
         newWinMessage += random([
-            'You caught all ' + catCount + ' fidgety cats on camera!',
+            'You caught ' + catCount + ' fidgety cats on camera!',
             'You took a photo of ' + catCount + ' mischievous cats!',
             'You successfully photographed ' + catCount + ' cats!',
             'You managed to herd ' + catCount + ' rowdy kittens!',
             'OwO',
+            'Gotta catch \'em all',
         ]);
     }
     winMessage = newWinMessage;
