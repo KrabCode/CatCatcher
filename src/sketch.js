@@ -6,7 +6,7 @@ let pmouseIsPressed = false;
 let mouseIsInsidePolaroid = false;
 
 let cats;
-let catCount = 12;
+let catCount = 16;
 let imageScale = 1;
 let held = null;
 let fadeSticks = false;
@@ -65,11 +65,16 @@ function preload() {
     catWalkUp = [loadImage("assets\\kitten-up-1.png"), loadImage("assets\\kitten-up-2.png")];
     polaroid = loadImage("assets\\polaroid.png", loadPolaroidImages);
 
-    title = loadImage("assets\\_title.png");
+    title = loadImage("assets\\_title_white.png");
     catTitle = [loadImage("assets\\kitten-lie-1.png"), loadImage("assets\\kitten-lie-2.png")];
     catSit = [loadImage("assets\\kitten-sit-1.png"), loadImage("assets\\kitten-sit-2.png")];
     catSleep = [loadImage("assets\\kitten-sleep-1.png"), loadImage("assets\\kitten-sleep-2.png")];
     // loadImage("assets\\kitten-sit-hat.png");
+
+    // good sounds:
+    /*
+    *  https://freesound.org/people/Christyboy100/sounds/495694/
+    * */
 }
 
 function loadPolaroidImages() {
@@ -93,7 +98,6 @@ function setup() {
     polaroidPos = createVector(width - 200, height * .5);
     targetRectPos = createVector(width * .3, height * .5);
     targetRectSize = createVector(1366 * .4, 768 * .4);
-    generateCats();
 }
 
 // noinspection JSUnusedGlobalSymbols
@@ -132,6 +136,10 @@ function drawIntro() {
     let catFrame = sin(t * 8) > 0 ? 0 : 1;
     pg.push();
     pg.translate(width * .5, height * .35);
+    /*
+    pg.noStroke();
+    pg.fill(grayscaleInteractive);
+    pg.rect(0, 0, title.width*1.5, title.height*1.5);*/
     pg.image(title, 0, 0);
     pg.translate(width * .035, -height * .1);
     pg.scale(2);
@@ -140,20 +148,20 @@ function drawIntro() {
 }
 
 function updateDrawIntroPlayButton() {
-    let clicked = drawButton(width * .5, height *.75, 300, 100, 'play');
-    if(clicked) {
-        gameState = 'play';
-    }
-}
-
-function updateDrawPlayAgainButton() {
-    let clicked = drawButton(width * .5, height *.9, 300, 100, 'play again');
+    let clicked = updateDrawButton(width * .5, height *.75, 300, 100, 'play');
     if(clicked) {
         restartGame();
     }
 }
 
-function drawButton(x,y,w,h,label)
+function updateDrawPlayAgainButton() {
+    let clicked = updateDrawButton(width * .5, height *.9, 300, 100, 'play again');
+    if(clicked) {
+        restartGame();
+    }
+}
+
+function updateDrawButton(x,y,w,h,label)
 {
     let clicked = false;
     pg.push();
@@ -167,12 +175,14 @@ function drawButton(x,y,w,h,label)
         clicked = true;
     }
     pg.translate(x, y);
-    pg.textAlign(CENTER, CENTER);
-    pg.rect(0, 0, w, h);
-    pg.fill(grayscaleBackground);
     if(hover) {
-        pg.fill(grayscaleWhite);
+        pg.stroke(grayscaleWhite);
+        pg.strokeWeight(3);
     }
+    pg.rect(0, 0, w, h);
+    pg.noStroke();
+    pg.fill(grayscaleWhite);
+    pg.textAlign(CENTER, CENTER);
     pg.textStyle(BOLD);
     pg.textSize(50);
     pg.text(label, 0, 0);
@@ -239,6 +249,7 @@ function areAllCatsInsideTarget() {
 function drawTarget() {
     pg.push();
     pg.translate(targetRectPos.x, targetRectPos.y);
+    pg.noStroke();
     pg.fill(grayscaleInteractive);
     pg.rect(0, 0, targetRectSize.x, targetRectSize.y);
     pg.pop();
@@ -434,6 +445,9 @@ class Cat {
     constructor() {
         this.id = this.uuid();
         this.pos = createVector(random(width), random(height));
+        this.stance = 0;
+        this.stanceStableMinimumFrames = 360;
+        this.stanceChangedFrame = -this.stanceStableMinimumFrames*2;
         this.direction = floor(random(4));
         this.size = 62 * imageScale;
         this.hue = (.7 + random(.4)) % 1;
@@ -445,12 +459,47 @@ class Cat {
 
     updateDraw() {
         this.mouseInteract();
-        if (!this.thisHeld()) {
-            this.updateDirection();
-            this.move();
-            this.checkCollisions();
+        if(this.isHeld()) {
+          this.stance = 0;
+        } else {
+            this.updateStance();
+            if(this.isInMovingStance()) {
+                this.updateDirection();
+                this.move();
+                this.checkCollisions();
+            }
         }
         this.draw();
+    }
+
+    isInMovingStance() {
+        return this.stance === 0;
+    }
+
+    isInSittingStance() {
+        return this.stance === 1;
+    }
+
+    isInSleepingStance() {
+        return this.stance === 2;
+    }
+
+    updateStance() {
+        let framesSinceStateLastChanged = frameCount - this.stanceChangedFrame;
+        if (random(1) > 0.01 && framesSinceStateLastChanged < this.stanceStableMinimumFrames) {
+            return;
+        }
+        let rand = random(1);
+        if(rand < 0.5) {
+            // sit up or stand up
+            this.stance--;
+            this.stanceChangedFrame = frameCount;
+        }else if(rand > .9) {
+            // sit down or start sleeping when sitting already
+            this.stance++;
+            this.stanceChangedFrame = frameCount;
+        }
+        this.stance = clamp(this.stance, 0, 2);
     }
 
     move() {
@@ -502,8 +551,8 @@ class Cat {
     draw() {
         pg.push();
         let frame = sin(t * 8 + this.timeOffset) > 0 ? 0 : 1;
-        let flipHorizontally = this.direction === 2 && !this.thisHeld();
-        let img = this.getImageByState(frame);
+        let flipHorizontally = this.direction === 2 && !this.isHeld();
+        let img = this.getImageByStateAndStance(frame);
         pg.tint(this.hue, this.sat, this.br);
         this.drawCatAtPos(img, flipHorizontally);
         this.drawCatWrapAround(img, flipHorizontally);
@@ -538,17 +587,23 @@ class Cat {
         pg.pop();
     }
 
-    getImageByState(frame) {
-        if (this.thisHeld()) {
+    getImageByStateAndStance(frame) {
+        if (this.isHeld()) {
             return catHeld;
         }
-        if (this.direction === 0 || this.direction === 2) {
-            return catWalkRight[frame];
-        } else if (this.direction === 1) {
-            return catWalkDown[frame];
-        } else if (this.direction === 3) {
+        if(this.isInMovingStance()) {
+            if (this.direction === 0 || this.direction === 2) {
+                return catWalkRight[frame];
+            } else if (this.direction === 1) {
+                return catWalkDown[frame];
+            }
             return catWalkUp[frame];
+        }else if(this.isInSittingStance()) {
+            return catSit[frame];
+        }else if(this.isInSleepingStance()) {
+            return catSleep[frame];
         }
+        console.info(this.stance);
         return catHeld;
     }
 
@@ -560,8 +615,8 @@ class Cat {
         }
     }
 
-    thisHeld() {
-        if (held === null) {
+    isHeld() {
+        if (held == null) {
             return false;
         }
         return held.id === this.id;
