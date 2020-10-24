@@ -55,8 +55,10 @@ let grayscaleBackground = 0.15;
 let grayscaleInteractive = 0.35;
 let grayscaleWhite = 1;
 
+// let meowSound;
+
 // noinspection JSUnusedGlobalSymbols
-function preload() {
+function preload(formats) {
     sticksHeld = loadImage("assets\\chopsticks-hold.png");
     sticksIdle = loadImage("assets\\chopsticks-idle.png");
     catHeld = loadImage("assets\\kitten-held.png");
@@ -69,8 +71,9 @@ function preload() {
     catTitle = [loadImage("assets\\kitten-lie-1.png"), loadImage("assets\\kitten-lie-2.png")];
     catSit = [loadImage("assets\\kitten-sit-1.png"), loadImage("assets\\kitten-sit-2.png")];
     catSleep = [loadImage("assets\\kitten-sleep-1.png"), loadImage("assets\\kitten-sleep-2.png")];
-    // loadImage("assets\\kitten-sit-hat.png");
 
+    // soundFormats('mp3');
+    // meowSound = loadSound('assets/sounds/meow.mp3');
 }
 
 function loadPolaroidImages() {
@@ -436,7 +439,6 @@ function ease(p, g) {
 
 // noinspection SpellCheckingInspection
 class Cat {
-
     constructor() {
         this.id = this.uuid();
         this.pos = createVector(random(width), random(height));
@@ -710,5 +712,4 @@ class Cat {
             return v.toString(16);
         });
     }
-
 }
