@@ -1,4 +1,3 @@
-
 let mainCanvas;
 let pg;
 
@@ -11,7 +10,7 @@ let catCount = 12;
 let imageScale = 1;
 let held = null;
 let fadeSticks = false;
-let gameState = 'play'; // known states: play, win
+let gameState = 'intro'; // known states: intro, play, win
 let winningPolaroidImage;
 
 let sticksFadeoutDelay = 60;
@@ -47,29 +46,35 @@ let polaroid;
 let polaroidIdle;
 let polaroidBlep;
 
+let title;
+let catTitle;
+let catSit;
+let catSleep;
+
+let grayscaleBackground = 0.15;
+let grayscaleInteractive = 0.35;
+let grayscaleWhite = 1;
+
 // noinspection JSUnusedGlobalSymbols
 function preload() {
     sticksHeld = loadImage("assets\\chopsticks-hold.png");
     sticksIdle = loadImage("assets\\chopsticks-idle.png");
-    catHeld =    loadImage("assets\\kitten-held.png");
+    catHeld = loadImage("assets\\kitten-held.png");
     catWalkDown = [loadImage("assets\\kitten-down-1.png"), loadImage("assets\\kitten-down-2.png")];
     catWalkRight = [loadImage("assets\\kitten-side-1.png"), loadImage("assets\\kitten-side-2.png")];
     catWalkUp = [loadImage("assets\\kitten-up-1.png"), loadImage("assets\\kitten-up-2.png")];
     polaroid = loadImage("assets\\polaroid.png", loadPolaroidImages);
 
-    // loadImage("assets\\_title.png");
-    // loadImage("assets\\kitten-lie-1.png");
-    // loadImage("assets\\kitten-lie-2.png");
-    // loadImage("assets\\kitten-sit-1.png");
-    // loadImage("assets\\kitten-sit-2.png");
+    title = loadImage("assets\\_title.png");
+    catTitle = [loadImage("assets\\kitten-lie-1.png"), loadImage("assets\\kitten-lie-2.png")];
+    catSit = [loadImage("assets\\kitten-sit-1.png"), loadImage("assets\\kitten-sit-2.png")];
+    catSleep = [loadImage("assets\\kitten-sleep-1.png"), loadImage("assets\\kitten-sleep-2.png")];
     // loadImage("assets\\kitten-sit-hat.png");
-    // loadImage("assets\\kitten-sleep-1.png");
-    // loadImage("assets\\kitten-sleep-2.png");
 }
 
 function loadPolaroidImages() {
-    polaroidBlep = polaroid.get(0,0,89,84);
-    polaroidIdle = polaroid.get(90,0,89,84);
+    polaroidBlep = polaroid.get(0, 0, 89, 84);
+    polaroidIdle = polaroid.get(90, 0, 89, 84);
 }
 
 // noinspection JSUnusedGlobalSymbols
@@ -84,6 +89,7 @@ function setup() {
     pg.noSmooth();
     pg.background(0);
     pg.imageMode(CENTER);
+    pg.rectMode(CENTER);
     polaroidPos = createVector(width - 200, height * .5);
     targetRectPos = createVector(width * .3, height * .5);
     targetRectSize = createVector(1366 * .4, 768 * .4);
@@ -94,30 +100,96 @@ function setup() {
 function draw() {
     mainCanvas.position((windowWidth - width) / 2, (windowHeight - height) / 2);
     t = radians(frameCount);
-    drawBackground();
-    updatePolaroidButton();
-    drawPolaroidButton();
+    pg.background(grayscaleBackground);
+    updateCursor();
+    if (gameState === 'intro') {
+        drawIntro();
+        updateDrawIntroPlayButton();
+    }
+    if (gameState === 'play' || gameState === 'win') {
+        updatePolaroidButton();
+        drawPolaroidButton();
+    }
     if (gameState === 'play') {
         updateHoldState();
         updateCatCountInsideTarget();
         drawTarget();
         updateDrawWalkingCats();
-        updateCursor();
+
         drawCursor();
         updateDrawHeldCat();
     }
     if (gameState === 'win') {
         drawWinningPolaroidImage();
+        updateDrawPlayAgainButton();
+        drawCongratsMessage();
     }
     image(pg, 0, 0);
     pmouseIsPressed = mouseIsPressed;
 }
 
-function drawBackground() {
+function drawIntro() {
+    let catFrame = sin(t * 8) > 0 ? 0 : 1;
     pg.push();
-    pg.background(.15);
-    pg.rectMode(CENTER);
+    pg.translate(width * .5, height * .35);
+    pg.image(title, 0, 0);
+    pg.translate(width * .035, -height * .1);
+    pg.scale(2);
+    pg.image(catTitle[catFrame], 0, 0);
+    pg.pop();
+}
+
+function updateDrawIntroPlayButton() {
+    let clicked = drawButton(width * .5, height *.75, 300, 100, 'play');
+    if(clicked) {
+        gameState = 'play';
+    }
+}
+
+function updateDrawPlayAgainButton() {
+    let clicked = drawButton(width * .5, height *.9, 300, 100, 'play again');
+    if(clicked) {
+        restartGame();
+    }
+}
+
+function drawButton(x,y,w,h,label)
+{
+    let clicked = false;
+    pg.push();
     pg.noStroke();
+    pg.fill(grayscaleInteractive);
+    let hover = pointRect(mouseX, mouseY, x - w * .5,y - h*.5, w, h);
+    if(hover) {
+        cursor('pointer');
+    }
+    if(hover && mouseIsPressed && !pmouseIsPressed) {
+        clicked = true;
+    }
+    pg.translate(x, y);
+    pg.textAlign(CENTER, CENTER);
+    pg.rect(0, 0, w, h);
+    pg.fill(grayscaleBackground);
+    if(hover) {
+        pg.fill(grayscaleWhite);
+    }
+    pg.textStyle(BOLD);
+    pg.textSize(50);
+    pg.text(label, 0, 0);
+    pg.pop();
+    return clicked;
+}
+
+function drawCongratsMessage() {
+    pg.push();
+    let message = 'You win! You took a photo of all ' + catCount + ' cats!'
+    pg.fill(grayscaleWhite);
+    pg.translate(width*.5, height*.1);
+    pg.textAlign(CENTER, CENTER);
+    pg.textStyle(BOLD);
+    pg.textSize(50);
+    pg.text(message, 0, 0)
+    pg.pop();
 }
 
 function drawWinningPolaroidImage() {
@@ -127,7 +199,7 @@ function drawWinningPolaroidImage() {
     pg.imageMode(CENTER);
     pg.rectMode(CENTER);
     pg.noFill();
-    pg.stroke(1);
+    pg.stroke(grayscaleWhite);
     pg.strokeWeight(5);
     pg.rect(0, 0, winningPolaroidImage.width, winningPolaroidImage.height);
     pg.image(winningPolaroidImage, 0, 0);
@@ -167,7 +239,7 @@ function areAllCatsInsideTarget() {
 function drawTarget() {
     pg.push();
     pg.translate(targetRectPos.x, targetRectPos.y);
-    pg.fill(.35);
+    pg.fill(grayscaleInteractive);
     pg.rect(0, 0, targetRectSize.x, targetRectSize.y);
     pg.pop();
 }
@@ -190,10 +262,10 @@ function updatePolaroidButton() {
 function drawPolaroidButton() {
     pg.push();
     pg.translate(polaroidPos.x, polaroidPos.y);
-    pg.fill(0.35);
+    pg.fill(grayscaleInteractive);
     pg.noStroke();
     pg.ellipse(0, 0, polaroidHitRadius, polaroidHitRadius);
-    pg.stroke(1);
+    pg.stroke(grayscaleWhite);
     pg.strokeWeight(2 + 8 * catCountInsideTargetLerp);
     if (catCountInsideTargetNorm >= 1) {
         pg.ellipse(0, 0, polaroidHitRadius, polaroidHitRadius);
@@ -201,7 +273,7 @@ function drawPolaroidButton() {
         // calling arc from -HALF_PI to -HALF_PI+.0001 is counter-intuitively drawn as a full circle, so we need a silly if-statement workaround
         pg.arc(0, 0, polaroidHitRadius, polaroidHitRadius, -HALF_PI, -HALF_PI + TAU * catCountInsideTargetLerp);
     }
-    pg.fill(150);
+    pg.fill(grayscaleWhite);
     pg.noStroke();
     if (polaroidLoadingAnimation > polaroidLoadingAnimationIncrementPerFrame) {
         // same silly if-statement workaround as before
@@ -219,7 +291,7 @@ function drawPolaroidButton() {
         let rayRadiusMiddle = polaroidHitRadius * .75;
         let rayLengthBig = polaroidHitRadius * 0.3 * ease(rayGrowthAnimation, 3);
         let rayLengthSmall = polaroidHitRadius * 0.15 * ease(rayGrowthAnimation, 2);
-        pg.stroke(1);
+        pg.stroke(grayscaleWhite);
         pg.strokeWeight(5);
         for (let i = 0; i < rayCount; i++) {
             let iNorm = norm(i, 0, rayCount);
@@ -240,17 +312,26 @@ function drawPolaroidButton() {
     pg.pop();
 }
 
+let useImageCursor;
 function updateCursor() {
-    mouseIsInsidePolaroid = dist(mouseX, mouseY, polaroidPos.x, polaroidPos.y) < polaroidHitRadius * .5;
+    cursor(ARROW);
+    if(gameState === 'play') {
+        mouseIsInsidePolaroid = dist(mouseX, mouseY, polaroidPos.x, polaroidPos.y) < polaroidHitRadius * .5;
+        useImageCursor = true;
+        if (mouseIsInsidePolaroid && areAllCatsInsideTarget()) {
+            useImageCursor = false;
+            if (polaroidLoadingAnimation > 0 && polaroidLoadingAnimation < 1) {
+                cursor('progress');
+            } else if (polaroidLoadingAnimation >= 1) {
+                cursor('pointer');
+            }
+        }
+    }
+
 }
 
 function drawCursor() {
-    if (mouseIsInsidePolaroid && areAllCatsInsideTarget()) {
-        if (polaroidLoadingAnimation > 0 && polaroidLoadingAnimation < 1) {
-            cursor('progress');
-        } else if (polaroidLoadingAnimation >= 1) {
-            cursor('pointer');
-        }
+    if(!useImageCursor) {
         return;
     }
     noCursor();
@@ -276,8 +357,6 @@ function drawCursor() {
 function mousePressed() {
     if (gameState === 'play' && polaroidLoadingAnimation >= 1 && mouseIsInsidePolaroid) {
         winGame();
-    } else if (gameState === 'win') {
-        restartGame();
     }
 }
 
@@ -332,7 +411,16 @@ function clamp(val, low, high) {
     return constrain(val, low, high);
 }
 
-// from the easing function tutorial by Etienne Jacob here https://necessarydisorder.wordpress.com/
+// adapted from the amazing jeffrey thompson: http://www.jeffreythompson.org/collision-detection/point-rect.php
+function pointRect(px, py, rx, ry, rw, rh)
+{
+    return(px >= rx     &&
+        px <= rx + rw   &&
+        py >= ry        &&
+        py <= ry + rh);
+}
+
+// from the easing function tutorial by Etienne Jacob: https://necessarydisorder.wordpress.com/
 function ease(p, g) {
     if (p < 0.5)
         return 0.5 * pow(2 * p, g);
