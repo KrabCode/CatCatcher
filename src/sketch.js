@@ -6,7 +6,7 @@ let pmouseIsPressed = false;
 let mouseIsInsidePolaroid = false;
 
 let cats;
-let catCount = 16;
+let catCount = 12;
 let imageScale = 1;
 let held = null;
 let fadeSticks = false;
@@ -71,10 +71,6 @@ function preload() {
     catSleep = [loadImage("assets\\kitten-sleep-1.png"), loadImage("assets\\kitten-sleep-2.png")];
     // loadImage("assets\\kitten-sit-hat.png");
 
-    // good sounds:
-    /*
-    *  https://freesound.org/people/Christyboy100/sounds/495694/
-    * */
 }
 
 function loadPolaroidImages() {
