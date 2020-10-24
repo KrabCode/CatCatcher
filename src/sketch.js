@@ -68,8 +68,8 @@ function preload() {
 }
 
 function loadPolaroidImages() {
-    polaroidIdle = polaroid.get(0,0,89,84);
-    polaroidBlep = polaroid.get(90,0,89,84);
+    polaroidBlep = polaroid.get(0,0,89,84);
+    polaroidIdle = polaroid.get(90,0,89,84);
 }
 
 // noinspection JSUnusedGlobalSymbols
