@@ -649,27 +649,27 @@ class Cat {
         let interactionWorldWrapTeleportY = 0;
         if (held == null) {
             let isOverCatButAcrossTheScreen = false;
-            let isDirectlyOverCat = this.isMouseOverCatWithOffset(0, 0);
+            let isDirectlyOverCat = this.isOffsetMouseOverCat(0, 0);
             if (!isDirectlyOverCat) {
                 isOverCatButAcrossTheScreen = true;
-                if (this.isMouseOverCatWithOffset(width, 0)) {
+                if (this.isOffsetMouseOverCat(width, 0)) {
                     interactionWorldWrapTeleportX += -width;
-                } else if (this.isMouseOverCatWithOffset(-width, 0)) {
+                } else if (this.isOffsetMouseOverCat(-width, 0)) {
                     interactionWorldWrapTeleportX += width;
-                } else if (this.isMouseOverCatWithOffset(0, height)) {
+                } else if (this.isOffsetMouseOverCat(0, height)) {
                     interactionWorldWrapTeleportY += -height;
-                } else if (this.isMouseOverCatWithOffset(0, -height)) {
+                } else if (this.isOffsetMouseOverCat(0, -height)) {
                     interactionWorldWrapTeleportY += height;
-                } else if (this.isMouseOverCatWithOffset(width, height)) {
+                } else if (this.isOffsetMouseOverCat(width, height)) {
                     interactionWorldWrapTeleportX += -width;
                     interactionWorldWrapTeleportY += -height;
-                } else if (this.isMouseOverCatWithOffset(-width, height)) {
+                } else if (this.isOffsetMouseOverCat(-width, height)) {
                     interactionWorldWrapTeleportX += width;
                     interactionWorldWrapTeleportY += -height;
-                } else if (this.isMouseOverCatWithOffset(width, -height)) {
+                } else if (this.isOffsetMouseOverCat(width, -height)) {
                     interactionWorldWrapTeleportX += -width;
                     interactionWorldWrapTeleportY += height;
-                } else if (this.isMouseOverCatWithOffset(-width, -height)) {
+                } else if (this.isOffsetMouseOverCat(-width, -height)) {
                     interactionWorldWrapTeleportX += width;
                     interactionWorldWrapTeleportY += height;
                 } else {
@@ -689,7 +689,7 @@ class Cat {
         }
     }
 
-    isMouseOverCatWithOffset(x, y) {
+    isOffsetMouseOverCat(x, y) {
         return dist(mouseX + x, mouseY + y, this.pos.x, this.pos.y) < this.interactionDist;
     }
 
