@@ -1,3 +1,5 @@
+p5.disableFriendlyErrors = true; // disables FES
+
 let mainCanvas;
 let pg;
 
@@ -6,6 +8,8 @@ let mouseIsInsidePolaroid = false;
 
 let cats;
 let catCount = 12;
+let catCountMinimum = 1;
+let catCountMaximum = 40;
 let winMessage;
 let winningPolaroidAngle;
 let winningPolaroidImage;
@@ -72,7 +76,8 @@ function preload() {
     title = loadImage("assets\\_title_white.png");
     catTitle = [loadImage("assets\\kitten-lie-1.png"), loadImage("assets\\kitten-lie-2.png")];
     catSit = [loadImage("assets\\kitten-sit-1.png"), loadImage("assets\\kitten-sit-2.png")];
-    catSleep = [loadImage("assets\\kitten-sleep-1.png"), loadImage("assets\\kitten-sleep-2.png")];
+    // catSleep = [loadImage("assets\\kitten-sleep-1.png"), loadImage("assets\\kitten-sleep-2.png")];
+    catSleep = [loadImage("assets\\kitten-slipp-1.png"), loadImage("assets\\kitten-slipp-2.png")];
 
     // soundFormats('mp3');
     // meowSound = loadSound('assets/sounds/meow.mp3');
@@ -118,7 +123,7 @@ function draw() {
         updateHoldState();
         updateCatCountInsideTarget();
         drawTarget();
-        updateDrawWalkingCats();
+        updateDrawFreeCats();
         drawCursor();
         updateDrawHeldCat();
     }
@@ -153,7 +158,7 @@ function updateDrawSettings() {
     } else if(catCountSub) {
         catCount--;
     }
-    catCount = clamp(catCount, 1, 40);
+    catCount = clamp(catCount, catCountMinimum, catCountMaximum);
     pg.push();
     pg.noStroke();
     pg.fill(grayscaleWhite);
@@ -195,7 +200,7 @@ function updateDrawButton(x, y, w, h, label, textScale, textOffsetY) {
     pg.push();
     pg.noStroke();
     pg.fill(grayscaleInteractive);
-    let hover = pointRect(mouseX, mouseY, x - w * .5, y - h * .5, w, h);
+    let hover = isPointInRectangle(mouseX, mouseY, x - w * .5, y - h * .5, w, h);
     if (hover) {
         cursor('pointer');
     }
@@ -457,6 +462,15 @@ function updateDrawHeldCat() {
     held.updateDraw();
 }
 
+function updateDrawFreeCats() {
+    for (let i = 0; i < cats.length; i++) {
+        let c = cats[i];
+        if(!c.isHeld()) {
+            c.updateDraw();
+        }
+    }
+}
+
 function generateCats() {
     cats = [];
     for (let i = 0; i < catCount; i++) {
@@ -464,19 +478,13 @@ function generateCats() {
     }
 }
 
-function updateDrawWalkingCats() {
-    for (let i = 0; i < cats.length; i++) {
-        let c = cats[i];
-        c.updateDraw();
-    }
-}
 
 function clamp(val, low, high) {
     return constrain(val, low, high);
 }
 
 // adapted from the amazing jeffrey thompson: http://www.jeffreythompson.org/collision-detection/point-rect.php
-function pointRect(px, py, rx, ry, rw, rh) {
+function isPointInRectangle(px, py, rx, ry, rw, rh) {
     return (px >= rx &&
         px <= rx + rw &&
         py >= ry &&
@@ -493,6 +501,7 @@ function ease(p, g) {
 
 // noinspection SpellCheckingInspection
 class Cat {
+    // TODO drag tilt
     constructor() {
         this.id = this.uuid();
         this.pos = createVector(random(width), random(height));
@@ -546,7 +555,7 @@ class Cat {
             // sit up or stand up
             this.stance--;
             this.stanceChangedFrame = frameCount;
-        } else if (rand > .9) {
+        } else if (rand > .8) {
             // sit down or start sleeping when sitting already
             this.stance++;
             this.stanceChangedFrame = frameCount;
@@ -699,7 +708,7 @@ class Cat {
     mouseInteract() {
         let interactionWorldWrapTeleportX = 0;
         let interactionWorldWrapTeleportY = 0;
-        if (held == null) {
+        if (held == null && mouseIsPressed) {
             let isOverCatButAcrossTheScreen = false;
             let isDirectlyOverCat = this.isOffsetMouseOverCat(0, 0);
             if (!isDirectlyOverCat) {
@@ -728,8 +737,7 @@ class Cat {
                     isOverCatButAcrossTheScreen = false;
                 }
             }
-            let isOverCatWorldWrapAware = isDirectlyOverCat || isOverCatButAcrossTheScreen;
-            if (held == null && mouseIsPressed && isOverCatWorldWrapAware) {
+            if (isDirectlyOverCat || isOverCatButAcrossTheScreen) {
                 held = this;
             }
         }
@@ -746,9 +754,13 @@ class Cat {
     }
 
     checkCollisions() {
+        // TODO optimize, maybe try isPointInRect before the distance check..
         for (let i = 0; i < cats.length; i++) {
             let otherCat = cats[i];
             if (otherCat.id === this.id) {
+                continue;
+            }
+            if(!isPointInRectangle(otherCat.pos.x, otherCat.pos.y, this.pos.x-this.size, this.pos.y-this.size, this.size*2, this.size*2)) {
                 continue;
             }
             let distanceToOther = dist(this.pos.x, this.pos.y, otherCat.pos.x, otherCat.pos.y);
