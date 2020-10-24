@@ -1,17 +1,19 @@
 let mainCanvas;
 let pg;
 
-let t = 0;
 let pmouseIsPressed = false;
 let mouseIsInsidePolaroid = false;
 
 let cats;
 let catCount = 12;
+let winMessage;
+let winningPolaroidAngle;
+let winningPolaroidImage;
+
 let imageScale = 1;
 let held = null;
 let fadeSticks = false;
 let gameState = 'intro'; // known states: intro, play, win
-let winningPolaroidImage;
 
 let sticksFadeoutDelay = 60;
 let sticksFadeoutDuration = 60;
@@ -58,7 +60,7 @@ let grayscaleWhite = 1;
 // let meowSound;
 
 // noinspection JSUnusedGlobalSymbols
-function preload(formats) {
+function preload() {
     sticksHeld = loadImage("assets\\chopsticks-hold.png");
     sticksIdle = loadImage("assets\\chopsticks-idle.png");
     catHeld = loadImage("assets\\kitten-held.png");
@@ -102,7 +104,6 @@ function setup() {
 // noinspection JSUnusedGlobalSymbols
 function draw() {
     mainCanvas.position((windowWidth - width) / 2, (windowHeight - height) / 2);
-    t = radians(frameCount);
     pg.background(grayscaleBackground);
     updateCursor();
     if (gameState === 'intro') {
@@ -118,7 +119,6 @@ function draw() {
         updateCatCountInsideTarget();
         drawTarget();
         updateDrawWalkingCats();
-
         drawCursor();
         updateDrawHeldCat();
     }
@@ -127,40 +127,70 @@ function draw() {
         updateDrawPlayAgainButton();
         drawCongratsMessage();
     }
+    if(gameState === 'intro' || gameState === 'win') {
+        updateDrawSettings();
+    }
     image(pg, 0, 0);
     pmouseIsPressed = mouseIsPressed;
 }
 
 function drawIntro() {
-    let catFrame = sin(t * 8) > 0 ? 0 : 1;
     pg.push();
-    pg.translate(width * .5, height * .35);
-    /*
-    pg.noStroke();
-    pg.fill(grayscaleInteractive);
-    pg.rect(0, 0, title.width*1.5, title.height*1.5);*/
+    pg.translate(width * .5, height * .45);
     pg.image(title, 0, 0);
     pg.translate(width * .035, -height * .1);
     pg.scale(2);
-    pg.image(catTitle[catFrame], 0, 0);
+    let oscillatingFrame = floor(frameCount / 22.5) % 2;
+    pg.image(catTitle[oscillatingFrame], 0, 0);
+    pg.pop();
+}
+
+function updateDrawSettings() {
+    let catCountSub = updateDrawButton(width*.1, height*.9, 70, 40, '-', 40);
+    let catCountAdd = updateDrawButton(width*.25,height*.9, 70, 40, '+', 40, 3);
+    if(catCountAdd) {
+        catCount++;
+    } else if(catCountSub) {
+        catCount--;
+    }
+    catCount = clamp(catCount, 1, 40);
+    pg.push();
+    pg.noStroke();
+    pg.fill(grayscaleWhite);
+    pg.textAlign(CENTER, CENTER);
+    pg.textStyle();
+    pg.textSize(30);
+    let catCountLabel = catCount + " cat" + (catCount > 1 ? 's' : '');
+    pg.text(catCountLabel, width * .175, height * .9);
+
+    let difficultyIndicator = 'difficulty: ';
+    if(catCount < 10) {
+        difficultyIndicator += 'easy';
+    }else if(catCount < 20) {
+        difficultyIndicator += 'normal';
+    }else {
+        difficultyIndicator += 'hard';
+    }
+    pg.textAlign(LEFT, CENTER);
+    pg.text(difficultyIndicator, width * .1, height * .8);
     pg.pop();
 }
 
 function updateDrawIntroPlayButton() {
-    let clicked = updateDrawButton(width * .5, height * .75, 300, 100, 'play');
+    let clicked = updateDrawButton(width * .5, height * .88, 300, 100, 'play');
     if (clicked) {
         restartGame();
     }
 }
 
 function updateDrawPlayAgainButton() {
-    let clicked = updateDrawButton(width * .5, height * .9, 300, 100, 'play again');
+    let clicked = updateDrawButton(width * .5, height * .88, 300, 100, 'play again');
     if (clicked) {
         restartGame();
     }
 }
 
-function updateDrawButton(x, y, w, h, label) {
+function updateDrawButton(x, y, w, h, label, textScale, textOffsetY) {
     let clicked = false;
     pg.push();
     pg.noStroke();
@@ -182,28 +212,36 @@ function updateDrawButton(x, y, w, h, label) {
     pg.fill(grayscaleWhite);
     pg.textAlign(CENTER, CENTER);
     pg.textStyle(BOLD);
-    pg.textSize(50);
-    pg.text(label, 0, 0);
+    if(textScale == null) {
+        pg.textSize(50);
+    }else {
+        pg.textSize(textScale);
+    }
+    if(textOffsetY != null) {
+        pg.text(label, 0, textOffsetY);
+    }else {
+        pg.text(label, 0, 0);
+    }
+
     pg.pop();
     return clicked;
 }
 
 function drawCongratsMessage() {
     pg.push();
-    let message = 'You win! You took a photo of all ' + catCount + ' cats!'
     pg.fill(grayscaleWhite);
     pg.translate(width * .5, height * .1);
     pg.textAlign(CENTER, CENTER);
     pg.textStyle(BOLD);
     pg.textSize(50);
-    pg.text(message, 0, 0)
+    pg.text(winMessage, 0, 0)
     pg.pop();
 }
 
 function drawWinningPolaroidImage() {
     pg.push();
     pg.translate(targetRectPos.x, targetRectPos.y);
-    pg.rotate(PI * .025);
+    pg.rotate(winningPolaroidAngle);
     pg.imageMode(CENTER);
     pg.rectMode(CENTER);
     pg.noFill();
@@ -376,7 +414,22 @@ function mouseReleased() {
 }
 
 function winGame() {
+    winningPolaroidAngle = random(-PI * .025, PI * .025);
     winningPolaroidImage = pg.get(targetRectPos.x - targetRectSize.x * .5, targetRectPos.y - targetRectSize.y * .5, targetRectSize.x, targetRectSize.y);
+    let newWinMessage = 'You win!\n';
+    if(catCount === 1) {
+        newWinMessage += 'You took a photo of a lonely cat...';
+    }
+    if(catCount > 1) {
+        newWinMessage += random([
+            'You caught all ' + catCount + ' fidgety cats on camera!',
+            'You took a photo of ' + catCount + ' mischievous cats!',
+            'You successfully photographed ' + catCount + ' cats!',
+            'You managed to herd ' + catCount + ' rowdy kittens!',
+            'OwO',
+        ]);
+    }
+    winMessage = newWinMessage;
     gameState = 'win';
 }
 
@@ -548,7 +601,7 @@ class Cat {
 
     draw() {
         pg.push();
-        let frame = sin(t * 8 + this.timeOffset) > 0 ? 0 : 1;
+        let frame = floor(frameCount / 22.5 + this.timeOffset) % 2;
         let flipHorizontally = this.direction === 2 && !this.isHeld();
         let img = this.currentImage(frame);
         pg.tint(this.hue, this.sat, this.br);
