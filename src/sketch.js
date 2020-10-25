@@ -20,6 +20,8 @@ let winningPolaroidAngle;
 let winningPolaroidImage;
 
 let tutorialPutCatsHereUnderstood = false;
+let tutorialPutCatsHereFadeoutDuration = 120;
+let tutorialPutCatsHereFadeoutStartFrame = 0;
 let tutorialTakeAPhotoUnderstood = false;
 
 let imageScale = 1;
@@ -288,7 +290,11 @@ function drawWinningPolaroidImage() {
 function drawTutorial() {
     pg.push();
     if(!tutorialPutCatsHereUnderstood) {
-        pg.tint(.6);
+        tutorialPutCatsHereFadeoutStartFrame = frameCount
+    }
+    let tutorialPutCatsHereAlpha = 1.-animate(tutorialPutCatsHereFadeoutStartFrame, tutorialPutCatsHereFadeoutDuration);
+    if(tutorialPutCatsHereAlpha > 0) {
+        pg.tint(.6, tutorialPutCatsHereAlpha);
         pg.image(labelTutorialPutCatsHere, targetRectPos.x, targetRectPos.y);
     }
     if(!tutorialTakeAPhotoUnderstood) {
