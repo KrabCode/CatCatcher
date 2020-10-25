@@ -7,6 +7,10 @@ let pmouseIsPressed = false;
 let mouseIsInsidePolaroid = false;
 let useImageCursor;
 
+let grayscaleBackground = 0.15;
+let grayscaleInteractive = 0.35;
+let grayscaleWhite = 1;
+
 let cats;
 let catCount = 2;
 let catCountMinimum = 1;
@@ -32,23 +36,22 @@ let polaroidLoadingAnimationIncrementPerFrame = 1 / polaroidLoadingDuration;
 let polaroidLoadingAnimation = 0;
 let polaroidLoadingJustCompleted = false;
 
-let rayGrowthDuration = 60;
-let rayGrowthStarted = -rayGrowthDuration * 2;
+let bigRayGrowthDuration = 60;
+let bigRayGrowthStarted = -bigRayGrowthDuration * 2;
 
-let smallRayAnimationDuration = 30;
+let smallRayAnimationDuration = 60;
 let smallRayAnimationStarted = -smallRayAnimationDuration*2;
 
 let rayRotationTime = 0;
 let rayCount = 12;
 
-
 let targetRectPos;
 let targetRectSize;
 
 let catCountInsideTarget = 0;
+let catCountInsideTargetJustFilled = false;
 let catCountInsideTargetNorm = 0;
 let catCountInsideTargetLerp = 0;
-let catCountInsideTargetJustFulfilled = false;
 
 let catHeld;
 let sticksIdle;
@@ -66,27 +69,30 @@ let catTitle;
 let catSit;
 let catSleep;
 
-let grayscaleBackground = 0.15;
-let grayscaleInteractive = 0.35;
-let grayscaleWhite = 1;
-
-// let meowSound;
+let labelPlayButton;
+let labelAgainButton;
+let labelTutorialTakeAPhoto;
+let labelTutorialPutCatsHere;
+let labelTutorialBeQuick;
 
 // noinspection JSUnusedGlobalSymbols
 function preload() {
+    polaroid = loadImage("assets\\polaroid.png", loadPolaroidImages);
     sticksHeld = loadImage("assets\\chopsticks-hold.png");
     sticksIdle = loadImage("assets\\chopsticks-idle.png");
     catHeld = loadImage("assets\\kitten-held.png");
     catWalkDown = [loadImage("assets\\kitten-down-1.png"), loadImage("assets\\kitten-down-2.png")];
     catWalkRight = [loadImage("assets\\kitten-side-1.png"), loadImage("assets\\kitten-side-2.png")];
     catWalkUp = [loadImage("assets\\kitten-up-1.png"), loadImage("assets\\kitten-up-2.png")];
-    polaroid = loadImage("assets\\polaroid.png", loadPolaroidImages);
-
     title = loadImage("assets\\_title_white.png");
     catTitle = [loadImage("assets\\kitten-lie-1.png"), loadImage("assets\\kitten-lie-2.png")];
     catSit = [loadImage("assets\\kitten-sit-1.png"), loadImage("assets\\kitten-sit-2.png")];
-    // catSleep = [loadImage("assets\\kitten-sleep-1.png"), loadImage("assets\\kitten-sleep-2.png")];
     catSleep = [loadImage("assets\\kitten-slipp-1.png"), loadImage("assets\\kitten-slipp-2.png")];
+    labelPlayButton = [loadImage("assets\\button-play-1.png"), loadImage("assets\\button-play-2.png")];
+    labelAgainButton = [loadImage("assets\\button-again-1.png"), loadImage("assets\\button-again-2.png")];
+    labelTutorialTakeAPhoto = loadImage("assets\\tutorial-thentakeaphoto.png");
+    labelTutorialPutCatsHere = loadImage("assets\\tutorial-putcatshere.png");
+    labelTutorialBeQuick = loadImage("assets\\tutorial-bequick.png");
 
     // soundFormats('mp3');
     // meowSound = loadSound('assets/sounds/meow.mp3');
@@ -274,9 +280,8 @@ function updateCatCountInsideTarget() {
             result++;
         }
     }
-    let pCatCountInsideTarget = catCountInsideTarget;
+    catCountInsideTargetJustFilled = result !== catCountInsideTarget && result === catCount;
     catCountInsideTarget = result;
-    catCountInsideTargetJustFulfilled = (pCatCountInsideTarget !== catCount) && (catCountInsideTarget === catCount);
     catCountInsideTargetNorm = clamp(norm(catCountInsideTarget, 0, catCount), 0, 1);
     catCountInsideTargetLerp = lerp(catCountInsideTargetLerp, catCountInsideTargetNorm, .25);
 }
@@ -286,7 +291,11 @@ function isInsideTargetWorldWrapAware(x, y) {
         isInsideTarget(x + width, y) ||
         isInsideTarget(x - width, y) ||
         isInsideTarget(x, y + height) ||
-        isInsideTarget(x, y - height);
+        isInsideTarget(x, y - height) ||
+        isInsideTarget(x + width, y + height) ||
+        isInsideTarget(x + width, y - height) ||
+        isInsideTarget(x - width, y + height) ||
+        isInsideTarget(x - width, y - height);
 }
 
 function isInsideTarget(x, y) {
@@ -330,12 +339,20 @@ function drawPolaroidButton() {
     pg.ellipse(0, 0, polaroidDiameter, polaroidDiameter);
     pg.stroke(grayscaleWhite);
     pg.strokeWeight(2 + 8 * catCountInsideTargetLerp);
-    if (catCountInsideTargetNorm >= 1) {
-        pg.ellipse(0, 0, polaroidDiameter, polaroidDiameter);
+    if(catCountInsideTargetJustFilled) {
+        smallRayAnimationStarted = frameCount;
+    }
+    if(catCountInsideTargetNorm >= 1) {
         drawPolaroidSmallRays();
+    }
+    if (catCountInsideTargetLerp >= .99) {
+        pg.ellipse(0, 0, polaroidDiameter, polaroidDiameter);
     } else if (catCountInsideTargetLerp > 0.001) {
         // calling arc from -HALF_PI to -HALF_PI+.0001 is counter-intuitively drawn as a full circle, so we need a silly if-statement workaround
         pg.arc(0, 0, polaroidDiameter, polaroidDiameter, -HALF_PI, -HALF_PI + TAU * catCountInsideTargetLerp);
+    }
+    if (polaroidLoadingJustCompleted) {
+        bigRayGrowthStarted = frameCount;
     }
     if (polaroidLoadingAnimation > polaroidLoadingAnimationIncrementPerFrame) {
         // same silly if-statement workaround as before
@@ -352,31 +369,25 @@ function drawPolaroidButton() {
 }
 
 function drawPolaroidSmallRays() {
-    if(catCountInsideTargetJustFulfilled) {
-        smallRayAnimationStarted = frameCount;
-    }
-    let smallRayGrowthAnimation = animateGrowth(smallRayAnimationStarted, smallRayAnimationDuration);
-    rayRotationTime += smallRayGrowthAnimation * .01;
+    let growthAnimation = animateGrowth(smallRayAnimationStarted, smallRayAnimationDuration);
+    rayRotationTime += growthAnimation * .01;
     pg.stroke(grayscaleWhite);
     pg.strokeWeight(5);
-    let smallRayLength = polaroidDiameter * 0.1 * smallRayGrowthAnimation;
-    let smallRayPointerRadius = polaroidDiameter * 0.75 - smallRayLength * .5;
-    let smallRayHandleRadius = smallRayPointerRadius + smallRayLength;
+    let extensionLength = polaroidDiameter * 0.1;
+    let pointerRadius = polaroidDiameter * 0.75;
+    let handleRadius = pointerRadius - extensionLength *  growthAnimation;
     for(let i = 0; i < rayCount; i++) {
         let iNorm = norm(i, 0, rayCount);
         let theta = iNorm * TAU + rayRotationTime;
-        pg.line(smallRayHandleRadius*cos(theta), smallRayHandleRadius*sin(theta), smallRayPointerRadius*cos(theta), smallRayPointerRadius*sin(theta));
+        pg.line(handleRadius*cos(theta), handleRadius*sin(theta), pointerRadius*cos(theta), pointerRadius*sin(theta));
     }
 }
 
 function drawPolaroidBigRays() {
-    if (polaroidLoadingJustCompleted) {
-        rayGrowthStarted = frameCount;
-    }
-    let rayGrowthAnimation = animateGrowth(rayGrowthStarted, rayGrowthDuration);
-    rayRotationTime += rayGrowthAnimation * .01;
+    let growthAnimation = animateGrowth(bigRayGrowthStarted, bigRayGrowthDuration);
+    rayRotationTime += growthAnimation * .01;
     let rayRadiusMiddle = polaroidDiameter * .75;
-    let rayGrowthAnimationEased = ease(rayGrowthAnimation, 3);
+    let rayGrowthAnimationEased = ease(growthAnimation, 3);
     let rayLength = polaroidDiameter * 0.3 * rayGrowthAnimationEased;
     pg.stroke(grayscaleWhite);
     pg.strokeWeight(5);
@@ -724,7 +735,7 @@ class Cat {
         } else if (this.isInSleepingStance()) {
             return catSleep[frame];
         }
-        console.info(this.stance);
+
         return catHeld;
     }
 
