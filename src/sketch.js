@@ -23,7 +23,8 @@ let sticksFadeoutDelay = 60;
 let sticksFadeoutDuration = 60;
 let sticksLastReleasedFrame = -sticksFadeoutDuration * 3;
 
-let polaroidHitRadius = 200;
+let polaroidDiameter = 200;
+let polaroidInteractionDistSquared = 10000;
 let polaroidPos;
 let polaroidLoadingDuration = 120;
 let polaroidLoadingAnimationIncrementPerFrame = 1 / polaroidLoadingDuration;
@@ -316,20 +317,20 @@ function drawPolaroidButton() {
     pg.translate(polaroidPos.x, polaroidPos.y);
     pg.fill(grayscaleInteractive);
     pg.noStroke();
-    pg.ellipse(0, 0, polaroidHitRadius, polaroidHitRadius);
+    pg.ellipse(0, 0, polaroidDiameter, polaroidDiameter);
     pg.stroke(grayscaleWhite);
     pg.strokeWeight(2 + 8 * catCountInsideTargetLerp);
     if (catCountInsideTargetNorm >= 1) {
-        pg.ellipse(0, 0, polaroidHitRadius, polaroidHitRadius);
+        pg.ellipse(0, 0, polaroidDiameter, polaroidDiameter);
     } else if (catCountInsideTargetLerp > 0.001) {
         // calling arc from -HALF_PI to -HALF_PI+.0001 is counter-intuitively drawn as a full circle, so we need a silly if-statement workaround
-        pg.arc(0, 0, polaroidHitRadius, polaroidHitRadius, -HALF_PI, -HALF_PI + TAU * catCountInsideTargetLerp);
+        pg.arc(0, 0, polaroidDiameter, polaroidDiameter, -HALF_PI, -HALF_PI + TAU * catCountInsideTargetLerp);
     }
     pg.fill(grayscaleWhite);
     pg.noStroke();
     if (polaroidLoadingAnimation > polaroidLoadingAnimationIncrementPerFrame) {
         // same silly if-statement workaround as before
-        pg.arc(0, 0, polaroidHitRadius, polaroidHitRadius, -HALF_PI, -HALF_PI + TAU * ease(polaroidLoadingAnimation, 2));
+        pg.arc(0, 0, polaroidDiameter, polaroidDiameter, -HALF_PI, -HALF_PI + TAU * ease(polaroidLoadingAnimation, 2));
     }
     if (polaroidLoadingAnimation >= 1 || gameState === 'win') {
         if (polaroidLoadingJustCompleted) {
@@ -340,9 +341,9 @@ function drawPolaroidButton() {
         rayGrowthAnimation = clamp(rayGrowthAnimation, 0, 1);
         rayRotationTime += ease(rayGrowthAnimation, 1) * .02;
         let rayCount = 20;
-        let rayRadiusMiddle = polaroidHitRadius * .75;
-        let rayLengthBig = polaroidHitRadius * 0.3 * ease(rayGrowthAnimation, 3);
-        let rayLengthSmall = polaroidHitRadius * 0.15 * ease(rayGrowthAnimation, 2);
+        let rayRadiusMiddle = polaroidInteractionDistSquared * .75;
+        let rayLengthBig = polaroidInteractionDistSquared * 0.3 * ease(rayGrowthAnimation, 3);
+        let rayLengthSmall = polaroidInteractionDistSquared * 0.15 * ease(rayGrowthAnimation, 2);
         pg.stroke(grayscaleWhite);
         pg.strokeWeight(5);
         for (let i = 0; i < rayCount; i++) {
@@ -369,7 +370,7 @@ let useImageCursor;
 function updateCursor() {
     cursor(ARROW);
     if (gameState === 'play') {
-        mouseIsInsidePolaroid = dist(mouseX, mouseY, polaroidPos.x, polaroidPos.y) < polaroidHitRadius * .5;
+        mouseIsInsidePolaroid = distSquared(mouseX, mouseY, polaroidPos.x, polaroidPos.y) < polaroidInteractionDistSquared;
         useImageCursor = true;
         if (mouseIsInsidePolaroid && areAllCatsInsideTarget()) {
             useImageCursor = false;
@@ -499,6 +500,13 @@ function ease(p, g) {
         return 1 - 0.5 * pow(2 * (1 - p), g);
 }
 
+// used instead of dist for a performance boost
+function distSquared(x1, y1, x2, y2) {
+    let dx = x2 - x1;
+    let dy = y2 - y1;
+    return dx * dx + dy * dy;
+}
+
 // noinspection SpellCheckingInspection
 class Cat {
     // TODO drag tilt
@@ -510,7 +518,7 @@ class Cat {
         this.stanceChangedFrame = -this.stanceStableMinimumFrames * 2;
         this.direction = floor(random(4));
         this.size = 62 * imageScale;
-        this.interactionDist = this.size * .5;
+        this.interactionDistSquared = (this.size * .5)*(this.size * .5);
         this.hue = (.7 + random(.4)) % 1;
         this.sat = random(.15, .4);
         this.br = random(.8, 1);
@@ -750,7 +758,7 @@ class Cat {
     }
 
     isOffsetMouseOverCat(x, y) {
-        return dist(mouseX + x, mouseY + y, this.pos.x, this.pos.y) < this.interactionDist;
+        return distSquared(mouseX + x, mouseY + y, this.pos.x, this.pos.y) < this.interactionDistSquared;
     }
 
     checkCollisions() {
@@ -763,8 +771,8 @@ class Cat {
             if(!isPointInRectangle(otherCat.pos.x, otherCat.pos.y, this.pos.x-this.size, this.pos.y-this.size, this.size*2, this.size*2)) {
                 continue;
             }
-            let distanceToOther = dist(this.pos.x, this.pos.y, otherCat.pos.x, otherCat.pos.y);
-            if (distanceToOther < this.size) {
+            let distanceToOther = distSquared(this.pos.x, this.pos.y, otherCat.pos.x, otherCat.pos.y);
+            if (distanceToOther < this.interactionDistSquared) {
                 let fromOtherToThis = p5.Vector.sub(this.pos, otherCat.pos);
                 let repulsion = (1 / norm(distanceToOther, 0, this.size)) * .5;
                 this.pos.add(fromOtherToThis.normalize().mult(repulsion));
