@@ -907,6 +907,7 @@ class Cat {
                 }
                 let fromOtherToThis = p5.Vector.sub(this.pos, otherCat.pos);
                 let repulsion = (1 / norm(distanceToOther, 0, this.interactionDistSquared))*.5;
+                repulsion = min(repulsion, 5);
                 this.pos.add(fromOtherToThis.normalize().mult(repulsion));
             }
         }
