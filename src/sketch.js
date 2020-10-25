@@ -7,7 +7,7 @@ let pmouseIsPressed = false;
 let mouseIsInsidePolaroid = false;
 
 let cats;
-let catCount = 2;
+let catCount = 12;
 let catCountMinimum = 1;
 let catCountMaximum = 80;
 let winMessage;
