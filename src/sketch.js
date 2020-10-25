@@ -7,9 +7,9 @@ let pmouseIsPressed = false;
 let mouseIsInsidePolaroid = false;
 
 let cats;
-let catCount = 12;
+let catCount = 2;
 let catCountMinimum = 1;
-let catCountMaximum = 40;
+let catCountMaximum = 80;
 let winMessage;
 let winningPolaroidAngle;
 let winningPolaroidImage;
@@ -326,24 +326,24 @@ function drawPolaroidButton() {
         // calling arc from -HALF_PI to -HALF_PI+.0001 is counter-intuitively drawn as a full circle, so we need a silly if-statement workaround
         pg.arc(0, 0, polaroidDiameter, polaroidDiameter, -HALF_PI, -HALF_PI + TAU * catCountInsideTargetLerp);
     }
-    pg.fill(grayscaleWhite);
-    pg.noStroke();
     if (polaroidLoadingAnimation > polaroidLoadingAnimationIncrementPerFrame) {
         // same silly if-statement workaround as before
+        pg.fill(grayscaleWhite);
+        pg.noStroke();
         pg.arc(0, 0, polaroidDiameter, polaroidDiameter, -HALF_PI, -HALF_PI + TAU * ease(polaroidLoadingAnimation, 2));
     }
+    if (polaroidLoadingJustCompleted) {
+        rayGrowthStarted = frameCount;
+    }
     if (polaroidLoadingAnimation >= 1 || gameState === 'win') {
-        if (polaroidLoadingJustCompleted) {
-            rayGrowthStarted = frameCount;
-        }
         let rayGrowthAnimation = clamp(norm(frameCount, rayGrowthStarted, rayGrowthStarted + rayGrowthDuration), 0, 1)
         rayGrowthAnimation = pow(rayGrowthAnimation, .25);
         rayGrowthAnimation = clamp(rayGrowthAnimation, 0, 1);
         rayRotationTime += ease(rayGrowthAnimation, 1) * .02;
         let rayCount = 20;
-        let rayRadiusMiddle = polaroidInteractionDistSquared * .75;
-        let rayLengthBig = polaroidInteractionDistSquared * 0.3 * ease(rayGrowthAnimation, 3);
-        let rayLengthSmall = polaroidInteractionDistSquared * 0.15 * ease(rayGrowthAnimation, 2);
+        let rayRadiusMiddle = polaroidDiameter * .75;
+        let rayLengthBig = polaroidDiameter * 0.3 * ease(rayGrowthAnimation, 3);
+        let rayLengthSmall = polaroidDiameter * 0.15 * ease(rayGrowthAnimation, 2);
         pg.stroke(grayscaleWhite);
         pg.strokeWeight(5);
         for (let i = 0; i < rayCount; i++) {
@@ -432,8 +432,6 @@ function winGame() {
             'You took a photo of ' + catCount + ' mischievous cats!',
             'You successfully photographed ' + catCount + ' cats!',
             'You managed to herd ' + catCount + ' rowdy kittens!',
-            'OwO',
-            'Gotta catch \'em all',
         ]);
     }
     winMessage = newWinMessage;
@@ -752,8 +750,10 @@ class Cat {
         if (held != null && held.id === this.id) {
             this.pos.x += interactionWorldWrapTeleportX;
             this.pos.y += interactionWorldWrapTeleportY;
-            this.pos.x = lerp(this.pos.x, mouseX, .35);
-            this.pos.y = lerp(this.pos.y, mouseY, .35);
+            this.pos.x = mouseX;
+            this.pos.y = mouseY;
+            //  this.pos.x = lerp(this.pos.x, mouseX, .35);
+           //  this.pos.y = lerp(this.pos.y, mouseY, .35);
         }
     }
 
