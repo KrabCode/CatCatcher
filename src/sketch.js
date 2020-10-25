@@ -774,7 +774,7 @@ class Cat {
             let distanceToOther = distSquared(this.pos.x, this.pos.y, otherCat.pos.x, otherCat.pos.y);
             if (distanceToOther < this.interactionDistSquared) {
                 let fromOtherToThis = p5.Vector.sub(this.pos, otherCat.pos);
-                let repulsion = (1 / norm(distanceToOther, 0, this.size)) * .5;
+                let repulsion = (1 / norm(distanceToOther, 0, this.interactionDistSquared)) * .5;
                 this.pos.add(fromOtherToThis.normalize().mult(repulsion));
             }
         }
