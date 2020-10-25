@@ -5,9 +5,10 @@ let pg;
 
 let pmouseIsPressed = false;
 let mouseIsInsidePolaroid = false;
+let useImageCursor;
 
 let cats;
-let catCount = 12;
+let catCount = 2;
 let catCountMinimum = 1;
 let catCountMaximum = 80;
 let winMessage;
@@ -24,7 +25,7 @@ let sticksFadeoutDuration = 60;
 let sticksLastReleasedFrame = -sticksFadeoutDuration * 3;
 
 let polaroidDiameter = 200;
-let polaroidInteractionDistSquared = 10000;
+let polaroidRadiusSquared = 10000; // (diameter / 2) squared
 let polaroidPos;
 let polaroidLoadingDuration = 120;
 let polaroidLoadingAnimationIncrementPerFrame = 1 / polaroidLoadingDuration;
@@ -33,7 +34,13 @@ let polaroidLoadingJustCompleted = false;
 
 let rayGrowthDuration = 60;
 let rayGrowthStarted = -rayGrowthDuration * 2;
+
+let smallRayAnimationDuration = 30;
+let smallRayAnimationStarted = -smallRayAnimationDuration*2;
+
 let rayRotationTime = 0;
+let rayCount = 12;
+
 
 let targetRectPos;
 let targetRectSize;
@@ -41,6 +48,7 @@ let targetRectSize;
 let catCountInsideTarget = 0;
 let catCountInsideTargetNorm = 0;
 let catCountInsideTargetLerp = 0;
+let catCountInsideTargetJustFulfilled = false;
 
 let catHeld;
 let sticksIdle;
@@ -133,8 +141,8 @@ function draw() {
         updateDrawPlayAgainButton();
         drawCongratsMessage();
     }
-    if(gameState === 'intro' || gameState === 'win') {
-        updateDrawSettings();
+    if (gameState === 'intro' || gameState === 'win') {
+        updateDrawCatCountSettings();
     }
     image(pg, 0, 0);
     pmouseIsPressed = mouseIsPressed;
@@ -151,13 +159,14 @@ function drawIntro() {
     pg.pop();
 }
 
-function updateDrawSettings() {
-    let catCountSub = updateDrawButton(width*.1, height*.9, 70, 40, '-', 40);
-    let catCountAdd = updateDrawButton(width*.25,height*.9, 70, 40, '+', 40, 3);
-    if(catCountAdd) {
-        catCount++;
-    } else if(catCountSub) {
+function updateDrawCatCountSettings() {
+    let catCountSub = updateDrawButton(width * .1, height * .9, 70, 40, '-', 40);
+    let catCountAdd = updateDrawButton(width * .25, height * .9, 70, 40, '+', 40, 3);
+    if (catCountSub) {
         catCount--;
+    }
+    if (catCountAdd) {
+        catCount++;
     }
     catCount = clamp(catCount, catCountMinimum, catCountMaximum);
     pg.push();
@@ -168,13 +177,12 @@ function updateDrawSettings() {
     pg.textSize(30);
     let catCountLabel = catCount + " cat" + (catCount > 1 ? 's' : '');
     pg.text(catCountLabel, width * .175, height * .9);
-
     let difficultyIndicator = 'difficulty: ';
-    if(catCount < 10) {
+    if (catCount < 10) {
         difficultyIndicator += 'easy';
-    }else if(catCount < 16) {
+    } else if (catCount < 16) {
         difficultyIndicator += 'normal';
-    }else {
+    } else {
         difficultyIndicator += 'hard';
     }
     pg.textAlign(LEFT, CENTER);
@@ -218,14 +226,14 @@ function updateDrawButton(x, y, w, h, label, textScale, textOffsetY) {
     pg.fill(grayscaleWhite);
     pg.textAlign(CENTER, CENTER);
     pg.textStyle(BOLD);
-    if(textScale == null) {
+    if (textScale == null) {
         pg.textSize(50);
-    }else {
+    } else {
         pg.textSize(textScale);
     }
-    if(textOffsetY != null) {
+    if (textOffsetY != null) {
         pg.text(label, 0, textOffsetY);
-    }else {
+    } else {
         pg.text(label, 0, 0);
     }
 
@@ -266,7 +274,9 @@ function updateCatCountInsideTarget() {
             result++;
         }
     }
+    let pCatCountInsideTarget = catCountInsideTarget;
     catCountInsideTarget = result;
+    catCountInsideTargetJustFulfilled = (pCatCountInsideTarget !== catCount) && (catCountInsideTarget === catCount);
     catCountInsideTargetNorm = clamp(norm(catCountInsideTarget, 0, catCount), 0, 1);
     catCountInsideTargetLerp = lerp(catCountInsideTargetLerp, catCountInsideTargetNorm, .25);
 }
@@ -322,6 +332,7 @@ function drawPolaroidButton() {
     pg.strokeWeight(2 + 8 * catCountInsideTargetLerp);
     if (catCountInsideTargetNorm >= 1) {
         pg.ellipse(0, 0, polaroidDiameter, polaroidDiameter);
+        drawPolaroidSmallRays();
     } else if (catCountInsideTargetLerp > 0.001) {
         // calling arc from -HALF_PI to -HALF_PI+.0001 is counter-intuitively drawn as a full circle, so we need a silly if-statement workaround
         pg.arc(0, 0, polaroidDiameter, polaroidDiameter, -HALF_PI, -HALF_PI + TAU * catCountInsideTargetLerp);
@@ -332,45 +343,66 @@ function drawPolaroidButton() {
         pg.noStroke();
         pg.arc(0, 0, polaroidDiameter, polaroidDiameter, -HALF_PI, -HALF_PI + TAU * ease(polaroidLoadingAnimation, 2));
     }
-    if (polaroidLoadingJustCompleted) {
-        rayGrowthStarted = frameCount;
-    }
     if (polaroidLoadingAnimation >= 1 || gameState === 'win') {
-        let rayGrowthAnimation = clamp(norm(frameCount, rayGrowthStarted, rayGrowthStarted + rayGrowthDuration), 0, 1)
-        rayGrowthAnimation = pow(rayGrowthAnimation, .25);
-        rayGrowthAnimation = clamp(rayGrowthAnimation, 0, 1);
-        rayRotationTime += ease(rayGrowthAnimation, 1) * .02;
-        let rayCount = 20;
-        let rayRadiusMiddle = polaroidDiameter * .75;
-        let rayLengthBig = polaroidDiameter * 0.3 * ease(rayGrowthAnimation, 3);
-        let rayLengthSmall = polaroidDiameter * 0.15 * ease(rayGrowthAnimation, 2);
-        pg.stroke(grayscaleWhite);
-        pg.strokeWeight(5);
-        for (let i = 0; i < rayCount; i++) {
-            let iNorm = norm(i, 0, rayCount);
-            let theta = rayRotationTime + iNorm * TAU;
-            let rayLength = i % 2 === 0 ? rayLengthSmall : rayLengthBig;
-            let rayInnerRadius = rayRadiusMiddle - rayLength * .5;
-            let rayOuterRadius = rayRadiusMiddle + rayLength * .5;
-            pg.line(rayInnerRadius * cos(theta), rayInnerRadius * sin(theta),
-                rayOuterRadius * cos(theta), rayOuterRadius * sin(theta));
-        }
+        drawPolaroidBigRays();
     }
     pg.translate(3, 5); // the polaroid picture is slightly off center so we need a minor correction
-    if (gameState === 'play') {
-        pg.image(polaroidIdle, 0, 0);
-    } else {
-        pg.image(polaroidBlep, 0, 0);
-    }
+    pg.image(gameState === 'play' ? polaroidIdle : polaroidBlep, 0, 0);
     pg.pop();
 }
 
-let useImageCursor;
+function drawPolaroidSmallRays() {
+    if(catCountInsideTargetJustFulfilled) {
+        smallRayAnimationStarted = frameCount;
+    }
+    let smallRayGrowthAnimation = animateGrowth(smallRayAnimationStarted, smallRayAnimationDuration);
+    rayRotationTime += smallRayGrowthAnimation * .01;
+    pg.stroke(grayscaleWhite);
+    pg.strokeWeight(5);
+    let smallRayLength = polaroidDiameter * 0.1 * smallRayGrowthAnimation;
+    let smallRayPointerRadius = polaroidDiameter * 0.75 - smallRayLength * .5;
+    let smallRayHandleRadius = smallRayPointerRadius + smallRayLength;
+    for(let i = 0; i < rayCount; i++) {
+        let iNorm = norm(i, 0, rayCount);
+        let theta = iNorm * TAU + rayRotationTime;
+        pg.line(smallRayHandleRadius*cos(theta), smallRayHandleRadius*sin(theta), smallRayPointerRadius*cos(theta), smallRayPointerRadius*sin(theta));
+    }
+}
+
+function drawPolaroidBigRays() {
+    if (polaroidLoadingJustCompleted) {
+        rayGrowthStarted = frameCount;
+    }
+    let rayGrowthAnimation = animateGrowth(rayGrowthStarted, rayGrowthDuration);
+    rayRotationTime += rayGrowthAnimation * .01;
+    let rayRadiusMiddle = polaroidDiameter * .75;
+    let rayGrowthAnimationEased = ease(rayGrowthAnimation, 3);
+    let rayLength = polaroidDiameter * 0.3 * rayGrowthAnimationEased;
+    pg.stroke(grayscaleWhite);
+    pg.strokeWeight(5);
+    for (let i = 0; i < rayCount; i++) {
+        let iNorm = norm(i, 0, rayCount);
+        let theta = iNorm * TAU + TAU / (rayCount * 2.) + rayRotationTime;
+        let rayInnerRadius = rayRadiusMiddle - rayLength * .5;
+        let rayOuterRadius = rayRadiusMiddle + rayLength * .5;
+        pg.line(rayInnerRadius * cos(theta), rayInnerRadius * sin(theta),
+            rayOuterRadius * cos(theta), rayOuterRadius * sin(theta));
+    }
+}
+
+function animateGrowth(start, duration) {
+    let animation = animate(start, duration);
+    return clamp(pow(animation, .25), 0, 1); // juicy numbers
+}
+
+function animate(start, duration) {
+    return clamp(norm(frameCount, start, start + duration), 0, 1);
+}
 
 function updateCursor() {
     cursor(ARROW);
     if (gameState === 'play') {
-        mouseIsInsidePolaroid = distSquared(mouseX, mouseY, polaroidPos.x, polaroidPos.y) < polaroidInteractionDistSquared;
+        mouseIsInsidePolaroid = distSquared(mouseX, mouseY, polaroidPos.x, polaroidPos.y) < polaroidRadiusSquared;
         useImageCursor = true;
         if (mouseIsInsidePolaroid && areAllCatsInsideTarget()) {
             useImageCursor = false;
@@ -423,10 +455,10 @@ function winGame() {
     winningPolaroidAngle = random(-PI * .05, PI * .05);
     winningPolaroidImage = pg.get(targetRectPos.x - targetRectSize.x * .5, targetRectPos.y - targetRectSize.y * .5, targetRectSize.x, targetRectSize.y);
     let newWinMessage = 'You win!\n';
-    if(catCount === 1) {
+    if (catCount === 1) {
         newWinMessage += 'You took a photo of a lonely cat...';
     }
-    if(catCount > 1) {
+    if (catCount > 1) {
         newWinMessage += random([
             'You caught ' + catCount + ' fidgety cats on camera!',
             'You took a photo of ' + catCount + ' mischievous cats!',
@@ -464,7 +496,7 @@ function updateDrawHeldCat() {
 function updateDrawFreeCats() {
     for (let i = 0; i < cats.length; i++) {
         let c = cats[i];
-        if(!c.isHeld()) {
+        if (!c.isHeld()) {
             c.updateDraw();
         }
     }
@@ -516,7 +548,7 @@ class Cat {
         this.stanceChangedFrame = -this.stanceStableMinimumFrames * 2;
         this.direction = floor(random(4));
         this.size = 62 * imageScale;
-        this.interactionDistSquared = (this.size * .5)*(this.size * .5);
+        this.interactionDistSquared = (this.size * .5) * (this.size * .5);
         this.hue = (.7 + random(.4)) % 1;
         this.sat = random(.15, .4);
         this.br = random(.8, 1);
@@ -753,7 +785,7 @@ class Cat {
             this.pos.x = mouseX;
             this.pos.y = mouseY;
             //  this.pos.x = lerp(this.pos.x, mouseX, .35);
-           //  this.pos.y = lerp(this.pos.y, mouseY, .35);
+            //  this.pos.y = lerp(this.pos.y, mouseY, .35);
         }
     }
 
@@ -768,7 +800,7 @@ class Cat {
             if (otherCat.id === this.id) {
                 continue;
             }
-            if(!isPointInRectangle(otherCat.pos.x, otherCat.pos.y, this.pos.x-this.size, this.pos.y-this.size, this.size*2, this.size*2)) {
+            if (!isPointInRectangle(otherCat.pos.x, otherCat.pos.y, this.pos.x - this.size, this.pos.y - this.size, this.size * 2, this.size * 2)) {
                 continue;
             }
             let distanceToOther = distSquared(this.pos.x, this.pos.y, otherCat.pos.x, otherCat.pos.y);
