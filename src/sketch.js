@@ -40,7 +40,7 @@ let bigRayGrowthDuration = 60;
 let bigRayGrowthStarted = -bigRayGrowthDuration * 2;
 
 let smallRayAnimationDuration = 60;
-let smallRayAnimationStarted = -smallRayAnimationDuration*2;
+let smallRayAnimationStarted = -smallRayAnimationDuration * 2;
 
 let rayRotationTime = 0;
 let rayCount = 12;
@@ -48,8 +48,8 @@ let rayCount = 12;
 let targetRectPos;
 let targetRectSize;
 
-let catCountInsideTarget = 0;
 let catCountInsideTargetJustFilled = false;
+let catCountInsideTarget = 0;
 let catCountInsideTargetNorm = 0;
 let catCountInsideTargetLerp = 0;
 
@@ -77,25 +77,29 @@ let labelTutorialBeQuick;
 
 // noinspection JSUnusedGlobalSymbols
 function preload() {
-    polaroid = loadImage("assets\\polaroid.png", loadPolaroidImages);
-    sticksHeld = loadImage("assets\\chopsticks-hold.png");
-    sticksIdle = loadImage("assets\\chopsticks-idle.png");
-    catHeld = loadImage("assets\\kitten-held.png");
-    catWalkDown = [loadImage("assets\\kitten-down-1.png"), loadImage("assets\\kitten-down-2.png")];
-    catWalkRight = [loadImage("assets\\kitten-side-1.png"), loadImage("assets\\kitten-side-2.png")];
-    catWalkUp = [loadImage("assets\\kitten-up-1.png"), loadImage("assets\\kitten-up-2.png")];
-    title = loadImage("assets\\_title_white.png");
-    catTitle = [loadImage("assets\\kitten-lie-1.png"), loadImage("assets\\kitten-lie-2.png")];
-    catSit = [loadImage("assets\\kitten-sit-1.png"), loadImage("assets\\kitten-sit-2.png")];
-    catSleep = [loadImage("assets\\kitten-slipp-1.png"), loadImage("assets\\kitten-slipp-2.png")];
-    labelPlayButton = [loadImage("assets\\button-play-1.png"), loadImage("assets\\button-play-2.png")];
-    labelAgainButton = [loadImage("assets\\button-again-1.png"), loadImage("assets\\button-again-2.png")];
-    labelTutorialTakeAPhoto = loadImage("assets\\tutorial-thentakeaphoto.png");
-    labelTutorialPutCatsHere = loadImage("assets\\tutorial-putcatshere.png");
-    labelTutorialBeQuick = loadImage("assets\\tutorial-bequick.png");
+    polaroid = loadAsset("polaroid.png", loadPolaroidImages);
+    sticksHeld = loadAsset("chopsticks-hold.png");
+    sticksIdle = loadAsset("chopsticks-idle.png");
+    catHeld = loadAsset("kitten-held.png");
+    catWalkDown = [loadAsset("kitten-down-1.png"), loadAsset("kitten-down-2.png")];
+    catWalkRight = [loadAsset("kitten-side-1.png"), loadAsset("kitten-side-2.png")];
+    catWalkUp = [loadAsset("kitten-up-1.png"), loadAsset("kitten-up-2.png")];
+    title = loadAsset("_title_white.png");
+    catTitle = [loadAsset("kitten-lie-1.png"), loadAsset("kitten-lie-2.png")];
+    catSit = [loadAsset("kitten-sit-1.png"), loadAsset("kitten-sit-2.png")];
+    catSleep = [loadAsset("kitten-slipp-1.png"), loadAsset("kitten-slipp-2.png")];
+    labelPlayButton = [loadAsset("button-play-1.png"), loadAsset("button-play-2.png")];
+    labelAgainButton = [loadAsset("button-again-1.png"), loadAsset("button-again-2.png")];
+    labelTutorialTakeAPhoto = loadAsset("tutorial-thentakeaphoto.png");
+    labelTutorialPutCatsHere = loadAsset("tutorial-putcatshere.png");
+    labelTutorialBeQuick = loadAsset("tutorial-bequick.png");
 
     // soundFormats('mp3');
     // meowSound = loadSound('assets/sounds/meow.mp3');
+}
+
+function loadAsset(localPath, successCallback) {
+    return loadImage("assets\\" + localPath, successCallback);
 }
 
 function loadPolaroidImages() {
@@ -242,7 +246,6 @@ function updateDrawButton(x, y, w, h, label, textScale, textOffsetY) {
     } else {
         pg.text(label, 0, 0);
     }
-
     pg.pop();
     return clicked;
 }
@@ -299,8 +302,10 @@ function isInsideTargetWorldWrapAware(x, y) {
 }
 
 function isInsideTarget(x, y) {
-    return x > targetRectPos.x - targetRectSize.x * .5 && x < targetRectPos.x + targetRectSize.x * .5 &&
-        y > targetRectPos.y - targetRectSize.y * .5 && y < targetRectPos.y + targetRectSize.y * .5;
+    return x > targetRectPos.x - targetRectSize.x * .5 &&
+        x < targetRectPos.x + targetRectSize.x * .5 &&
+        y > targetRectPos.y - targetRectSize.y * .5 &&
+        y < targetRectPos.y + targetRectSize.y * .5;
 }
 
 function areAllCatsInsideTarget() {
@@ -339,10 +344,10 @@ function drawPolaroidButton() {
     pg.ellipse(0, 0, polaroidDiameter, polaroidDiameter);
     pg.stroke(grayscaleWhite);
     pg.strokeWeight(2 + 8 * catCountInsideTargetLerp);
-    if(catCountInsideTargetJustFilled) {
+    if (catCountInsideTargetJustFilled) {
         smallRayAnimationStarted = frameCount;
     }
-    if(catCountInsideTargetNorm >= 1) {
+    if (catCountInsideTargetNorm >= 1) {
         drawPolaroidSmallRays();
     }
     if (catCountInsideTargetLerp >= .99) {
@@ -370,16 +375,21 @@ function drawPolaroidButton() {
 
 function drawPolaroidSmallRays() {
     let growthAnimation = animateGrowth(smallRayAnimationStarted, smallRayAnimationDuration);
-    rayRotationTime += growthAnimation * .01;
+    rayRotationTime += growthAnimation * .005;
     pg.stroke(grayscaleWhite);
     pg.strokeWeight(5);
-    let extensionLength = polaroidDiameter * 0.1;
-    let pointerRadius = polaroidDiameter * 0.75;
-    let handleRadius = pointerRadius - extensionLength *  growthAnimation;
-    for(let i = 0; i < rayCount; i++) {
+    let extensionLength = polaroidDiameter * 0.15;
+    let pointerRadius = polaroidDiameter * 0.65;
+    let handleRadius = pointerRadius + extensionLength * growthAnimation;
+    for (let i = 0; i < rayCount; i++) {
         let iNorm = norm(i, 0, rayCount);
         let theta = iNorm * TAU + rayRotationTime;
-        pg.line(handleRadius*cos(theta), handleRadius*sin(theta), pointerRadius*cos(theta), pointerRadius*sin(theta));
+        let pointerX = pointerRadius * cos(theta);
+        let pointerY = pointerRadius * sin(theta);
+        pg.line(pointerX, pointerY, handleRadius * cos(theta), handleRadius * sin(theta));
+        // let arrowheadRadius = pointerRadius + extensionLength * .35 * growthAnimation;
+        // pg.line(pointerX, pointerY, arrowheadRadius * cos(theta+.05), arrowheadRadius * sin(theta+.05));
+        // pg.line(pointerX, pointerY, arrowheadRadius * cos(theta-.05), arrowheadRadius * sin(theta-.05));
     }
 }
 
@@ -805,7 +815,6 @@ class Cat {
     }
 
     checkCollisions() {
-        // TODO optimize, maybe try isPointInRect before the distance check..
         for (let i = 0; i < cats.length; i++) {
             let otherCat = cats[i];
             if (otherCat.id === this.id) {
