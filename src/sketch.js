@@ -1,4 +1,4 @@
-p5.disableFriendlyErrors = true; // disables FES
+p5.disableFriendlyErrors = true; // compute fester
 
 let mainCanvas;
 let pg;
@@ -9,6 +9,7 @@ let useImageCursor;
 
 let grayscaleBackground = 0.15;
 let grayscaleInteractive = 0.35;
+let grayscaleInteractiveHover = 0.5;
 let grayscaleWhite = 1;
 
 let cats;
@@ -80,6 +81,9 @@ let labelTutorialTakeAPhoto;
 let labelTutorialPutCatsHere;
 let labelTutorialBeQuick;
 
+let shaderCanvas;
+let introShader;
+
 // noinspection JSUnusedGlobalSymbols
 function preload() {
     polaroid = loadAsset("polaroid.png", loadPolaroidImages);
@@ -98,13 +102,14 @@ function preload() {
     labelTutorialTakeAPhoto = loadAsset("tutorial-thentakeaphoto.png");
     labelTutorialPutCatsHere = loadAsset("tutorial-putcatshere.png");
     labelTutorialBeQuick = loadAsset("tutorial-bequick.png");
+    // introShader = loadShader('assets/intro.vert', 'assets/intro.frag', shaderLoadSuccess, shaderLoadError);
 
     // soundFormats('mp3');
     // meowSound = loadSound('assets/sounds/meow.mp3');
 }
 
 function loadAsset(localPath, successCallback) {
-    return loadImage("assets\\" + localPath, successCallback);
+    return loadImage("assets\\images\\" + localPath, successCallback);
 }
 
 function loadPolaroidImages() {
@@ -112,14 +117,25 @@ function loadPolaroidImages() {
     polaroidIdle = polaroid.get(90, 0, 89, 84);
 }
 
+function shaderLoadSuccess(msg) {
+    console.log('shader loaded:');
+    console.log(msg);
+}
+
+function shaderLoadError(error) {
+    console.log('shader error:');
+    console.log(error);
+}
+
 // noinspection JSUnusedGlobalSymbols
 function setup() {
-    mainCanvas = createCanvas(1366, 768, P2D);
+    mainCanvas = createCanvas(1366, 768);
     frameRate(60);
     noSmooth();
     colorMode(HSB, 1, 1, 1, 1);
     imageMode(CORNER);
-    pg = createGraphics(width, height, P2D);
+    // shaderCanvas = createGraphics(width, height, WEBGL);
+    pg = createGraphics(width, height);
     pg.colorMode(HSB, 1, 1, 1, 1);
     pg.noSmooth();
     pg.background(0);
@@ -137,8 +153,9 @@ function draw() {
     updateCursor();
     updateTutorial();
     if (gameState === 'intro') {
+        // updateDrawIntroShader();
         drawIntro();
-        updateDrawIntroPlayButton();
+        updateDrawPlayButton(labelPlayButton);
     }
     if (gameState === 'play' || gameState === 'win') {
         updatePolaroidButton();
@@ -155,14 +172,21 @@ function draw() {
     }
     if (gameState === 'win') {
         drawWinningPolaroidImage();
-        updateDrawPlayAgainButton();
+        updateDrawPlayButton(labelAgainButton);
         drawCongratsMessage();
     }
     if (gameState === 'intro' || gameState === 'win') {
         updateDrawCatCountSettings();
     }
-    image(pg, 0, 0);
+    image(pg, 0, 0, width, height);
     pmouseIsPressed = mouseIsPressed;
+}
+
+function updateDrawIntroShader() {
+    introShader.setUniform("u_resolution", width, height);
+    shaderCanvas.shader(introShader);
+    shaderCanvas.rect(0,0,width,height);
+    pg.image(shaderCanvas, width * .5, height * .5);
 }
 
 function drawIntro() {
@@ -206,15 +230,8 @@ function updateDrawCatCountSettings() {
     pg.pop();
 }
 
-function updateDrawIntroPlayButton() {
-    let clicked = updateDrawButton(width * .5, height * .88, 300, 100, labelPlayButton[animateOscillation()]);
-    if (clicked) {
-        restartGame();
-    }
-}
-
-function updateDrawPlayAgainButton() {
-    let clicked = updateDrawButton(width * .5, height * .88, 300, 100, labelAgainButton[animateOscillation()]);
+function updateDrawPlayButton(label) {
+    let clicked = updateDrawButton(width * .5, height * .88, 300, 100, label[animateOscillation()]);
     if (clicked) {
         restartGame();
     }
@@ -227,6 +244,7 @@ function updateDrawButton(x, y, w, h, labelImage, labelText, textScale, textOffs
     pg.fill(grayscaleInteractive);
     let hover = isPointInRectangle(mouseX, mouseY, x - w * .5, y - h * .5, w, h);
     if (hover) {
+        pg.fill(grayscaleInteractiveHover);
         cursor('pointer');
     }
     if (hover && mouseIsPressed && !pmouseIsPressed) {
