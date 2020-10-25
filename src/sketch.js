@@ -21,7 +21,7 @@ let winningPolaroidAngle;
 let winningPolaroidImage;
 
 let tutorialPutCatsHereUnderstood = false;
-let tutorialPutCatsHereFadeoutDuration = 120;
+let tutorialPutCatsHereFadeoutDuration = 100;
 let tutorialPutCatsHereFadeoutStartFrame = 0;
 let tutorialTakeAPhotoUnderstood = false;
 
@@ -103,7 +103,6 @@ function preload() {
     labelTutorialPutCatsHere = loadAsset("tutorial-putcatshere.png");
     labelTutorialBeQuick = loadAsset("tutorial-bequick.png");
     // introShader = loadShader('assets/intro.vert', 'assets/intro.frag', shaderLoadSuccess, shaderLoadError);
-
     // soundFormats('mp3');
     // meowSound = loadSound('assets/sounds/meow.mp3');
 }
@@ -183,7 +182,6 @@ function draw() {
 }
 
 function updateDrawIntroShader() {
-    introShader.setUniform("u_resolution", width, height);
     shaderCanvas.shader(introShader);
     shaderCanvas.rect(0,0,width,height);
     pg.image(shaderCanvas, width * .5, height * .5);
@@ -533,16 +531,22 @@ function winGame() {
     winningPolaroidAngle = random(-PI * .05, PI * .05);
     winningPolaroidImage = pg.get(targetRectPos.x - targetRectSize.x * .5, targetRectPos.y - targetRectSize.y * .5, targetRectSize.x, targetRectSize.y);
     let newWinMessage = 'You win!\n';
-    if (catCount === 1) {
-        newWinMessage += 'You took a photo of a lonely cat...';
-    }
-    if (catCount > 1) {
+    if (catCount >= 16) {
+        newWinMessage += random([
+            'Impressive! You got all ' + catCount + ' cats.',
+            'Amazing! You got all ' + catCount + ' cats.',
+        ]);
+    }else if (catCount > 1) {
         newWinMessage += random([
             'You caught ' + catCount + ' fidgety cats on camera!',
             'You took a photo of ' + catCount + ' mischievous cats!',
-            'You successfully photographed ' + catCount + ' cats!',
+            'You photographed ' + catCount + ' restless cats!',
             'You managed to herd ' + catCount + ' rowdy kittens!',
         ]);
+    }else if (catCount === 1) {
+        newWinMessage += 'You took a photo of a lonely cat...';
+    }else {
+        newWinMessage += 'You broke the game.';
     }
     winMessage = newWinMessage;
     gameState = 'win';
@@ -586,7 +590,6 @@ function generateCats() {
         cats.push(new Cat());
     }
 }
-
 
 function clamp(val, low, high) {
     return constrain(val, low, high);
