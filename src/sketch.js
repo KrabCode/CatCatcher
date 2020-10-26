@@ -11,11 +11,13 @@ let grayscaleBackground = 0.15;
 let grayscaleInteractive = 0.35;
 let grayscaleInteractiveHover = 0.5;
 let grayscaleWhite = 1;
+let rectRoundedness = 20;
 
 let cats;
-let catCount = 8;
+let defaultCatCount = 4;
+let catCount = defaultCatCount;
 let catCountMinimum = 1;
-let catCountMaximum = 80;
+let catCountMaximum = 99;
 let winMessage;
 let winningPolaroidAngle;
 let winningPolaroidImage;
@@ -195,6 +197,14 @@ function drawIntro() {
     pg.scale(2);
     pg.image(catTitle[animateOscillation()], 0, 0);
     pg.pop();
+    pg.push();
+    pg.translate(width * .65, height * .25);
+    pg.fill(grayscaleInteractiveHover);
+    pg.noStroke();
+    pg.rotate(PI*.15);
+    pg.textSize(40);
+    pg.text('early access', 0, 0);
+    pg.pop();
 }
 
 function updateDrawCatCountSettings() {
@@ -220,8 +230,12 @@ function updateDrawCatCountSettings() {
         difficultyIndicator += 'easy';
     } else if (catCount < 16) {
         difficultyIndicator += 'normal';
-    } else {
+    } else if(catCount < 20) {
         difficultyIndicator += 'hard';
+    } else if(catCount < 30) {
+        difficultyIndicator += 'brutal';
+    } else {
+        difficultyIndicator += 'nightmare';
     }
     pg.textAlign(LEFT, CENTER);
     pg.text(difficultyIndicator, width * .1, height * .82);
@@ -253,7 +267,7 @@ function updateDrawButton(x, y, w, h, labelImage, labelText, textScale, textOffs
         pg.stroke(grayscaleWhite);
         pg.strokeWeight(3);
     }
-    pg.rect(0, 0, w, h);
+    pg.rect(0, 0, w, h, rectRoundedness);
     if (textScale == null) {
         pg.textSize(50);
     } else {
@@ -295,11 +309,11 @@ function drawWinningPolaroidImage() {
     pg.rotate(winningPolaroidAngle);
     pg.imageMode(CENTER);
     pg.rectMode(CENTER);
+    pg.image(winningPolaroidImage, 0, 0);
     pg.noFill();
     pg.stroke(grayscaleWhite);
     pg.strokeWeight(5);
     pg.rect(0, 0, winningPolaroidImage.width, winningPolaroidImage.height);
-    pg.image(winningPolaroidImage, 0, 0);
     pg.pop();
 }
 
