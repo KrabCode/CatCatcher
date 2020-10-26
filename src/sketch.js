@@ -83,9 +83,6 @@ let labelTutorialTakeAPhoto;
 let labelTutorialPutCatsHere;
 let labelTutorialBeQuick;
 
-let shaderCanvas;
-let introShader;
-
 // noinspection JSUnusedGlobalSymbols
 function preload() {
     polaroid = loadAsset("polaroid.png", loadPolaroidImages);
@@ -104,7 +101,6 @@ function preload() {
     labelTutorialTakeAPhoto = loadAsset("tutorial-thentakeaphoto.png");
     labelTutorialPutCatsHere = loadAsset("tutorial-putcatshere.png");
     labelTutorialBeQuick = loadAsset("tutorial-bequick.png");
-    // introShader = loadShader('assets/intro.vert', 'assets/intro.frag', shaderLoadSuccess, shaderLoadError);
     // soundFormats('mp3');
     // meowSound = loadSound('assets/sounds/meow.mp3');
 }
@@ -116,16 +112,6 @@ function loadAsset(localPath, successCallback) {
 function loadPolaroidImages() {
     polaroidBlep = polaroid.get(0, 0, 89, 84);
     polaroidIdle = polaroid.get(90, 0, 89, 84);
-}
-
-function shaderLoadSuccess(msg) {
-    console.log('shader loaded:');
-    console.log(msg);
-}
-
-function shaderLoadError(error) {
-    console.log('shader error:');
-    console.log(error);
 }
 
 // noinspection JSUnusedGlobalSymbols
@@ -181,12 +167,6 @@ function draw() {
     }
     image(pg, 0, 0, width, height);
     pmouseIsPressed = mouseIsPressed;
-}
-
-function updateDrawIntroShader() {
-    shaderCanvas.shader(introShader);
-    shaderCanvas.rect(0,0,width,height);
-    pg.image(shaderCanvas, width * .5, height * .5);
 }
 
 function drawIntro() {
