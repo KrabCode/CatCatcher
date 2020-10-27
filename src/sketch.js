@@ -11,10 +11,10 @@ let grayscaleBackground = 0.15;
 let grayscaleInteractive = 0.35;
 let grayscaleInteractiveHover = 0.5;
 let grayscaleWhite = 1;
-let rectRoundedness = 20;
+let rectRoundedness = 100;
 
 let cats;
-let defaultCatCount = 4;
+let defaultCatCount = 20;
 let catCount = defaultCatCount;
 let catCountMinimum = 1;
 let catCountMaximum = 99;
@@ -22,6 +22,7 @@ let winMessage;
 let winningPolaroidAngle;
 let winningPolaroidImage;
 
+// TODO tutorial put cats here only disappear when wins but hide for win polaroid
 let tutorialPutCatsHereUnderstood = false;
 let tutorialPutCatsHereFadeoutDuration = 100;
 let tutorialPutCatsHereFadeoutStartFrame = 0;
@@ -68,7 +69,6 @@ let catWalkDown;
 let catWalkRight;
 let catWalkUp;
 
-let polaroid;
 let polaroidIdle;
 let polaroidBlep;
 
@@ -133,6 +133,7 @@ function setup() {
 function draw() {
     mainCanvas.position((windowWidth - width) / 2, (windowHeight - height) / 2);
     pg.background(grayscaleBackground);
+    // TODO sort cats by y
     updateCursor();
     updateTutorial();
     if (gameState === 'intro') {
@@ -177,7 +178,7 @@ function drawIntro() {
     pg.translate(width * .65, height * .25);
     pg.fill(grayscaleInteractiveHover);
     pg.noStroke();
-    pg.rotate(PI*.15);
+    pg.rotate(PI * .15);
     pg.textSize(40);
     pg.text('early access', 0, 0);
     pg.pop();
@@ -206,9 +207,9 @@ function updateDrawCatCountSettings() {
         difficultyIndicator += 'easy';
     } else if (catCount < 16) {
         difficultyIndicator += 'normal';
-    } else if(catCount < 24) {
+    } else if (catCount < 24) {
         difficultyIndicator += 'hard';
-    } else if(catCount < 32) {
+    } else if (catCount < 32) {
         difficultyIndicator += 'brutal';
     } else {
         difficultyIndicator += 'nightmare';
@@ -249,7 +250,7 @@ function updateDrawButton(x, y, w, h, labelImage, labelText, textScale, textOffs
     } else {
         pg.textSize(textScale);
     }
-    if(labelImage != null) {
+    if (labelImage != null) {
         pg.scale(1.5);
         pg.image(labelImage, 0, 0);
     }
@@ -295,27 +296,27 @@ function drawWinningPolaroidImage() {
 
 function drawTutorial() {
     pg.push();
-    if(!tutorialPutCatsHereUnderstood) {
-        tutorialPutCatsHereFadeoutStartFrame = frameCount
+    if (!tutorialPutCatsHereUnderstood) {
+        tutorialPutCatsHereFadeoutStartFrame = frameCount;
     }
-    let tutorialPutCatsHereAlpha = 1.-animate(tutorialPutCatsHereFadeoutStartFrame, tutorialPutCatsHereFadeoutDuration);
-    if(tutorialPutCatsHereAlpha > 0) {
+    let tutorialPutCatsHereAlpha = 1. - animate(tutorialPutCatsHereFadeoutStartFrame, tutorialPutCatsHereFadeoutDuration);
+    if (tutorialPutCatsHereAlpha > 0) {
         pg.tint(.6, tutorialPutCatsHereAlpha);
         pg.image(labelTutorialPutCatsHere, targetRectPos.x, targetRectPos.y);
     }
-    if(!tutorialTakeAPhotoUnderstood) {
+    if (!tutorialTakeAPhotoUnderstood) {
         pg.tint(.5);
-        pg.image(labelTutorialTakeAPhoto, polaroidPos.x-polaroidDiameter*.5, polaroidPos.y+polaroidDiameter);
-        pg.image(labelTutorialBeQuick, polaroidPos.x-polaroidDiameter*.5, polaroidPos.y+polaroidDiameter*1.25);
+        pg.image(labelTutorialTakeAPhoto, polaroidPos.x - polaroidDiameter * .5, polaroidPos.y + polaroidDiameter);
+        pg.image(labelTutorialBeQuick, polaroidPos.x - polaroidDiameter * .5, polaroidPos.y + polaroidDiameter * 1.25);
     }
     pg.pop();
 }
 
 function updateTutorial() {
-    if(catCountInsideTargetJustFilled) {
+    if (catCountInsideTargetJustFilled) {
         tutorialPutCatsHereUnderstood = true;
     }
-    if(gameState === 'win') {
+    if (gameState === 'win') {
         tutorialTakeAPhotoUnderstood = true;
     }
 }
@@ -526,16 +527,16 @@ function winGame() {
             'Impressive! You got all ' + catCount + ' cats.',
             'Amazing! You got all ' + catCount + ' cats.',
         ]);
-    }else if (catCount > 1) {
+    } else if (catCount > 1) {
         newWinMessage += random([
             'You caught ' + catCount + ' fidgety cats on camera!',
             'You took a photo of ' + catCount + ' mischievous cats!',
             'You photographed ' + catCount + ' restless cats!',
             'You managed to herd ' + catCount + ' rowdy kittens!',
         ]);
-    }else if (catCount === 1) {
+    } else if (catCount === 1) {
         newWinMessage += 'You took a photo of a lonely cat...';
-    }else {
+    } else {
         newWinMessage += 'You broke the game.';
     }
     winMessage = newWinMessage;
@@ -609,7 +610,7 @@ function distSquared(x1, y1, x2, y2) {
 }
 
 function animateOscillation(offset) {
-    if(offset == null) {
+    if (offset == null) {
         return floor(frameCount / 22.5) % 2;
     }
     return floor(frameCount / 22.5 + offset) % 2;
@@ -632,8 +633,16 @@ class Cat {
         this.hue = (.7 + random(.4)) % 1;
         this.sat = random(.15, .4);
         this.br = random(.8, 1);
-        this.timeOffset = random(TAU);
+        this.timeOffset = random(10);
         this.speedMagnitude = random(.25, .75);
+        this.pInsideTarget = false;
+        this.exitTargetAnimationDuration = 30;
+        this.exitTargetAnimationStarted = -this.exitTargetAnimationDuration * 2;
+        this.exitTargetAnimationPos = createVector();
+    }
+
+    compareFunction(a, b) {
+        return a.pos.y > b.pos.y;
     }
 
     updateDraw() {
@@ -646,11 +655,35 @@ class Cat {
                 this.updateDirection();
                 this.move();
             }
-            if(!this.isInSleepingStance()) {
+            if (!this.isInSleepingStance()) {
                 this.checkCollisions();
             }
         }
+        this.drawCatExitsTargetIndicator();
         this.draw();
+    }
+
+    drawCatExitsTargetIndicator() {
+        let insideTarget = isInsideTarget(this.pos.x, this.pos.y);
+        if (!insideTarget && this.pInsideTarget) {
+            this.exitTargetAnimationStarted = frameCount;
+            this.exitTargetAnimationPos.x = this.pos.x;
+            this.exitTargetAnimationPos.y = this.pos.y;
+        }
+        this.pInsideTarget = insideTarget;
+
+        let exitAnimation = animateGrowth(this.exitTargetAnimationStarted, this.exitTargetAnimationDuration);
+        let alpha = 1 - exitAnimation;
+        if (alpha > 0) {
+            pg.push();
+            pg.translate(this.exitTargetAnimationPos.x, this.exitTargetAnimationPos.y);
+            pg.stroke(0,0,1, alpha);
+            pg.strokeWeight(3);
+            pg.noFill();
+            let radius = 120 * exitAnimation;
+            pg.circle(0, 0, radius);
+            pg.pop();
+        }
     }
 
     isInMovingStance() {
@@ -676,7 +709,7 @@ class Cat {
             this.stance--;
             this.stanceChangedFrame = frameCount;
         }
-        if (rand > .99) {
+        if (rand > .97) {
             // sit down or start sleeping when sitting already
             this.stance++;
             this.stanceChangedFrame = frameCount;
@@ -734,6 +767,7 @@ class Cat {
         }
         this.direction %= 4;
     }
+
 
     draw() {
         pg.push();
@@ -892,11 +926,11 @@ class Cat {
             }
             let distanceToOther = distSquared(this.pos.x, this.pos.y, otherCat.pos.x, otherCat.pos.y);
             if (distanceToOther < this.interactionDistSquared * 2) {
-                if(this.isInSittingStance()) {
+                if (this.isInSittingStance()) {
                     this.stance--;
                 }
                 let fromOtherToThis = p5.Vector.sub(this.pos, otherCat.pos);
-                let repulsion = (1 / norm(distanceToOther, 0, this.interactionDistSquared))*.5;
+                let repulsion = (1 / norm(distanceToOther, 0, this.interactionDistSquared)) * .5;
                 repulsion = min(repulsion, 5);
                 this.pos.add(fromOtherToThis.normalize().mult(repulsion));
             }
