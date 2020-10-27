@@ -14,7 +14,7 @@ let grayscaleWhite = 1;
 let rectRoundedness = 100;
 
 let cats;
-let defaultCatCount = 20;
+let defaultCatCount = 7;
 let catCount = defaultCatCount;
 let catCountMinimum = 1;
 let catCountMaximum = 99;
@@ -22,7 +22,6 @@ let winMessage;
 let winningPolaroidAngle;
 let winningPolaroidImage;
 
-// TODO tutorial put cats here only disappear when wins but hide for win polaroid
 let tutorialPutCatsHereUnderstood = false;
 let tutorialPutCatsHereFadeoutDuration = 100;
 let tutorialPutCatsHereFadeoutStartFrame = 0;
@@ -117,7 +116,6 @@ function setup() {
     noSmooth();
     colorMode(HSB, 1, 1, 1, 1);
     imageMode(CORNER);
-    // shaderCanvas = createGraphics(width, height, WEBGL);
     pg = createGraphics(width, height);
     pg.colorMode(HSB, 1, 1, 1, 1);
     pg.noSmooth();
@@ -325,7 +323,7 @@ function drawTutorial() {
     }
     if (!tutorialTakeAPhotoUnderstood) {
         pg.tint(.5);
-        pg.image(labelTutorialTakeAPhoto, polaroidPos.x - polaroidDiameter * .5, polaroidPos.y + polaroidDiameter);
+        pg.image(labelTutorialTakeAPhoto, polaroidPos.x - polaroidDiameter * .5, polaroidPos.y + polaroidDiameter*1.1);
         pg.image(labelTutorialBeQuick, polaroidPos.x - polaroidDiameter * .5, polaroidPos.y + polaroidDiameter * 1.25);
     }
     pg.pop();
