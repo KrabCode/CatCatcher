@@ -166,6 +166,25 @@ function draw() {
     pmouseIsPressed = mouseIsPressed;
 }
 
+// noinspection JSUnusedGlobalSymbols
+function mousePressed() {
+    if (gameState === 'play' && polaroidLoadingAnimation >= 1 && mouseIsInsidePolaroid) {
+        winGame();
+    }
+}
+
+// noinspection JSUnusedGlobalSymbols
+function mouseReleased() {
+    drop();
+}
+
+// noinspection JSUnusedGlobalSymbols
+function keyPressed() {
+    if(gameState === 'play' && keyCode === ESCAPE) {
+        gameState = 'intro';
+    }
+}
+
 function drawIntro() {
     pg.push();
     pg.translate(width * .5, height * .45);
@@ -504,18 +523,6 @@ function drawCursor() {
         pg.image(sticksIdle, x, y, w, h);
     }
     pg.pop();
-}
-
-// noinspection JSUnusedGlobalSymbols
-function mousePressed() {
-    if (gameState === 'play' && polaroidLoadingAnimation >= 1 && mouseIsInsidePolaroid) {
-        winGame();
-    }
-}
-
-// noinspection JSUnusedGlobalSymbols
-function mouseReleased() {
-    drop();
 }
 
 function winGame() {
