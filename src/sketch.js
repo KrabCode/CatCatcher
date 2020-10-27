@@ -85,7 +85,8 @@ let labelTutorialBeQuick;
 
 // noinspection JSUnusedGlobalSymbols
 function preload() {
-    polaroid = loadAsset("polaroid.png", loadPolaroidImages);
+    polaroidBlep = loadAsset("polaroid-blep.png");
+    polaroidIdle = loadAsset("polaroid-idle.png");
     sticksHeld = loadAsset("chopsticks-hold.png");
     sticksIdle = loadAsset("chopsticks-idle.png");
     catHeld = loadAsset("kitten-held.png");
@@ -107,11 +108,6 @@ function preload() {
 
 function loadAsset(localPath, successCallback) {
     return loadImage("assets\\images\\" + localPath, successCallback);
-}
-
-function loadPolaroidImages() {
-    polaroidBlep = polaroid.get(0, 0, 89, 84);
-    polaroidIdle = polaroid.get(90, 0, 89, 84);
 }
 
 // noinspection JSUnusedGlobalSymbols
@@ -206,13 +202,13 @@ function updateDrawCatCountSettings() {
     let catCountLabel = catCount + " cat" + (catCount > 1 ? 's' : '');
     pg.text(catCountLabel, width * .175, height * .9);
     let difficultyIndicator = 'difficulty: ';
-    if (catCount < 10) {
+    if (catCount < 8) {
         difficultyIndicator += 'easy';
     } else if (catCount < 16) {
         difficultyIndicator += 'normal';
-    } else if(catCount < 20) {
+    } else if(catCount < 24) {
         difficultyIndicator += 'hard';
-    } else if(catCount < 30) {
+    } else if(catCount < 32) {
         difficultyIndicator += 'brutal';
     } else {
         difficultyIndicator += 'nightmare';
