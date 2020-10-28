@@ -15,6 +15,7 @@ let rectRoundedness = 100;
 
 let cats;
 let defaultCatCount = 7;
+//let defaultCatCount = 99;
 let catCount = defaultCatCount;
 let catCountMinimum = 1;
 let catCountMaximum = 99;
@@ -37,7 +38,8 @@ let sticksFadeoutDuration = 60;
 let sticksLastReleasedFrame = -sticksFadeoutDuration * 3;
 
 let polaroidDiameter = 200;
-let polaroidRadiusSquared = 10000; // (diameter / 2) squared
+let polaroidRadius = 100;
+let polaroidRadiusSquared = 10000;
 let polaroidPos;
 let polaroidLoadingDuration = 120;
 let polaroidLoadingAnimationIncrementPerFrame = 1 / polaroidLoadingDuration;
@@ -52,6 +54,7 @@ let smallRayAnimationStarted = -smallRayAnimationDuration * 2;
 
 let rayRotationTime = 0;
 let rayCount = 12;
+let shapeDetail = 200;
 
 let targetRectPos;
 let targetRectSize;
@@ -82,6 +85,8 @@ let labelTutorialTakeAPhoto;
 let labelTutorialPutCatsHere;
 let labelTutorialBeQuick;
 
+let fontComicSans;
+
 // noinspection JSUnusedGlobalSymbols
 function preload() {
     polaroidBlep = loadAsset("polaroid-blep.png");
@@ -101,6 +106,7 @@ function preload() {
     labelTutorialTakeAPhoto = loadAsset("tutorial-thentakeaphoto.png");
     labelTutorialPutCatsHere = loadAsset("tutorial-putcatshere.png");
     labelTutorialBeQuick = loadAsset("tutorial-bequick.png");
+    fontComicSans = loadFont('assets\\comic_sans.ttf');
     // soundFormats('mp3');
     // meowSound = loadSound('assets/sounds/meow.mp3');
 }
@@ -116,22 +122,50 @@ function setup() {
     noSmooth();
     colorMode(HSB, 1, 1, 1, 1);
     imageMode(CORNER);
-    pg = createGraphics(width, height);
+    pg = createGraphics(width, height, WEBGL);
+    // pg.setAttributes('antialias', true);
+    pg.strokeCap(ROUND);
     pg.colorMode(HSB, 1, 1, 1, 1);
-    pg.noSmooth();
     pg.background(0);
     pg.imageMode(CENTER);
     pg.rectMode(CENTER);
+    pg.textFont(fontComicSans);
     polaroidPos = createVector(width - 200, height * .5);
     targetRectPos = createVector(width * .3, height * .5);
     targetRectSize = createVector(1366 * .4, 768 * .4);
 }
 
 // noinspection JSUnusedGlobalSymbols
+function displayFPS() {
+    pg.push();
+    pg.textAlign(LEFT, CENTER);
+    pg.textSize(40);
+    pg.fill(grayscaleInteractiveHover);
+    pg.noStroke();
+    pg.text('fps ' + frameRate().toFixed(0), 20, 40);
+    pg.pop();
+}
+
+function sortCatsByY() {
+    cats.sort(function(a, b) {
+        if (a.pos.y < b.pos.y) {
+            return -1;
+        }
+        if (a.pos.y > b.pos.y) {
+            return 1;
+        }
+        return 0;
+    });
+}
+
+// noinspection JSUnusedGlobalSymbols
 function draw() {
     mainCanvas.position((windowWidth - width) / 2, (windowHeight - height) / 2);
+    pg.clear();
     pg.background(grayscaleBackground);
-    // TODO sort cats by y
+    pg.push();
+    pg.translate(-width*.5, -height*.5);
+
     updateCursor();
     updateTutorial();
     if (gameState === 'intro') {
@@ -148,6 +182,7 @@ function draw() {
         updateCatCountInsideTarget();
         drawTarget();
         drawTutorial();
+        sortCatsByY();
         updateDrawFreeCats();
         drawCursor();
         updateDrawHeldCat();
@@ -160,6 +195,8 @@ function draw() {
     if (gameState === 'intro' || gameState === 'win') {
         updateDrawCatCountSettings();
     }
+    displayFPS();
+    pg.pop();
     image(pg, 0, 0, width, height);
     pmouseIsPressed = mouseIsPressed;
 }
@@ -188,7 +225,7 @@ function drawIntro() {
     pg.translate(width * .5, height * .45);
     pg.image(title, 0, 0);
     pg.translate(width * .035, -height * .1);
-    pg.scale(2);
+    pg.scale(1);
     pg.image(catTitle[animateOscillation()], 0, 0);
     pg.pop();
     pg.push();
@@ -203,7 +240,7 @@ function drawIntro() {
 
 function updateDrawCatCountSettings() {
     let catCountSub = updateDrawButton(width * .1, height * .9, 70, 40, null, '-', 40);
-    let catCountAdd = updateDrawButton(width * .25, height * .9, 70, 40, null, '+', 40, 3);
+    let catCountAdd = updateDrawButton(width * .25, height * .9, 70, 40, null, '+', 40);
     if (catCountSub) {
         catCount--;
     }
@@ -214,11 +251,11 @@ function updateDrawCatCountSettings() {
     pg.push();
     pg.noStroke();
     pg.fill(grayscaleWhite);
-    pg.textAlign(CENTER, CENTER);
+    pg.textAlign(RIGHT, CENTER);
     pg.textStyle();
     pg.textSize(30);
     let catCountLabel = catCount + " cat" + (catCount > 1 ? 's' : '');
-    pg.text(catCountLabel, width * .175, height * .9);
+    pg.text(catCountLabel, width * .2125, height * .895);
     let difficultyIndicator = 'difficulty: ';
     if (catCount < 8) {
         difficultyIndicator += 'easy';
@@ -231,8 +268,9 @@ function updateDrawCatCountSettings() {
     } else {
         difficultyIndicator += 'nightmare';
     }
+    pg.fill(grayscaleInteractiveHover);
     pg.textAlign(LEFT, CENTER);
-    pg.text(difficultyIndicator, width * .1, height * .82);
+    pg.text(difficultyIndicator, width * .08, height * .82);
     pg.pop();
 }
 
@@ -243,7 +281,7 @@ function updateDrawPlayButton(label) {
     }
 }
 
-function updateDrawButton(x, y, w, h, labelImage, labelText, textScale, textOffsetY) {
+function updateDrawButton(x, y, w, h, labelImage, labelText, textScale) {
     let clicked = false;
     pg.push();
     pg.noStroke();
@@ -276,11 +314,7 @@ function updateDrawButton(x, y, w, h, labelImage, labelText, textScale, textOffs
         pg.fill(grayscaleWhite);
         pg.textAlign(CENTER, CENTER);
         pg.textStyle(BOLD);
-        if (textOffsetY != null) {
-            pg.text(labelText, 0, textOffsetY);
-        } else {
-            pg.text(labelText, 0, 0);
-        }
+        pg.text(labelText, 0, -10);
     }
     pg.pop();
     return clicked;
@@ -402,9 +436,10 @@ function updatePolaroidButton() {
 function drawPolaroidButton() {
     pg.push();
     pg.translate(polaroidPos.x, polaroidPos.y);
+    pg.strokeCap(ROUND);
     pg.fill(grayscaleInteractive);
     pg.noStroke();
-    pg.ellipse(0, 0, polaroidDiameter, polaroidDiameter);
+    customCircle(polaroidRadius);
     pg.stroke(grayscaleWhite);
     pg.strokeWeight(2 + 8 * catCountInsideTargetLerp);
     if (catCountInsideTargetJustFilled) {
@@ -414,10 +449,10 @@ function drawPolaroidButton() {
         drawPolaroidSmallRays();
     }
     if (catCountInsideTargetLerp >= .99) {
-        pg.ellipse(0, 0, polaroidDiameter, polaroidDiameter);
+        customCircle(polaroidRadius);
     } else if (catCountInsideTargetLerp > 0.001) {
         // calling arc from -HALF_PI to -HALF_PI+.0001 is counter-intuitively drawn as a full circle, so we need a silly if-statement workaround
-        pg.arc(0, 0, polaroidDiameter, polaroidDiameter, -HALF_PI, -HALF_PI + TAU * catCountInsideTargetLerp);
+        customStrokeArc(polaroidRadius, -HALF_PI, -HALF_PI + TAU * catCountInsideTargetLerp);
     }
     if (polaroidLoadingJustCompleted) {
         bigRayGrowthStarted = frameCount;
@@ -426,7 +461,7 @@ function drawPolaroidButton() {
         // same silly if-statement workaround as before
         pg.fill(grayscaleWhite);
         pg.noStroke();
-        pg.arc(0, 0, polaroidDiameter, polaroidDiameter, -HALF_PI, -HALF_PI + TAU * ease(polaroidLoadingAnimation, 2));
+        customFillArc(polaroidRadius, -HALF_PI, -HALF_PI + TAU * ease(polaroidLoadingAnimation, 2));
     }
     if (polaroidLoadingAnimation >= 1 || gameState === 'win') {
         drawPolaroidBigRays();
@@ -440,6 +475,7 @@ function drawPolaroidSmallRays() {
     let growthAnimation = animateGrowth(smallRayAnimationStarted, smallRayAnimationDuration);
     rayRotationTime += growthAnimation * .005;
     pg.stroke(grayscaleWhite);
+    pg.push();
     pg.strokeWeight(5);
     let extensionLength = polaroidDiameter * 0.15;
     let pointerRadius = polaroidDiameter * 0.65;
@@ -454,6 +490,7 @@ function drawPolaroidSmallRays() {
         // pg.line(pointerX, pointerY, arrowheadRadius * cos(theta+.05), arrowheadRadius * sin(theta+.05));
         // pg.line(pointerX, pointerY, arrowheadRadius * cos(theta-.05), arrowheadRadius * sin(theta-.05));
     }
+    pg.pop();
 }
 
 function drawPolaroidBigRays() {
@@ -621,6 +658,43 @@ function animateOscillation(offset) {
     return floor(frameCount / 22.5 + offset) % 2;
 }
 
+function customCircle(radius) {
+    pg.beginShape();
+    for(let i = 0; i < shapeDetail; i++)
+    {
+        let theta = map(i, 0, shapeDetail-1, 0, TAU);
+        pg.vertex(radius*cos(theta), radius*sin(theta), 0);
+    }
+    pg.endShape(CLOSE);
+}
+
+function customStrokeArc(radius, angleStart, angleStop) {
+    pg.push();
+    pg.beginShape();
+    for(let i = 0; i < shapeDetail; i++)
+    {
+        let theta = map(i, 0, shapeDetail-1, angleStart, angleStop);
+        pg.vertex(radius*cos(theta),radius*sin(theta), 0);
+    }
+    pg.endShape();
+    pg.pop();
+}
+
+
+function customFillArc(radius, angleStart, angleStop) {
+    pg.push();
+    pg.beginShape(TRIANGLE_STRIP);
+    for(let i = 0; i < shapeDetail; i++)
+    {
+        let theta = map(i, 0, shapeDetail-1, angleStart, angleStop);
+        pg.vertex(0,0);
+        pg.vertex(radius*cos(theta), radius*sin(theta), 0);
+    }
+    pg.endShape();
+    pg.pop();
+}
+
+
 // noinspection SpellCheckingInspection
 class Cat {
     // TODO drag tilt
@@ -646,10 +720,6 @@ class Cat {
         this.exitTargetAnimationPos = createVector();
     }
 
-    compareFunction(a, b) {
-        return a.pos.y > b.pos.y;
-    }
-
     updateDraw() {
         this.mouseInteract();
         if (this.isHeld()) {
@@ -657,14 +727,15 @@ class Cat {
         } else {
             this.updateStance();
             if (this.isInMovingStance()) {
-                this.updateDirection();
-                this.move();
+               this.updateDirection();
+               this.move();
             }
             if (!this.isInSleepingStance()) {
-                this.checkCollisions();
+               this.checkCollisions();
             }
         }
         this.drawCatExitsTargetIndicator();
+        pg.translate(0,0,1); // cats need to be drawn in front of everything else
         this.draw();
     }
 
@@ -682,14 +753,14 @@ class Cat {
         if (alpha > 0) {
             pg.push();
             pg.translate(this.exitTargetAnimationPos.x, this.exitTargetAnimationPos.y);
-            pg.stroke(0,0,1, alpha);
+            pg.stroke(grayscaleWhite , alpha);
             pg.strokeWeight(3);
             pg.noFill();
-            let radius = 120 * exitAnimation;
-            pg.circle(0, 0, radius);
+            customCircle(60 * exitAnimation);
             pg.pop();
         }
     }
+
 
     isInMovingStance() {
         return this.stance === 0;
@@ -779,7 +850,7 @@ class Cat {
         let frame = animateOscillation(this.timeOffset);
         let flipHorizontally = this.direction === 2 && !this.isHeld();
         let img = this.currentImage(frame);
-        pg.tint(this.hue, this.sat, this.br);
+        pg.tint(this.hue, this.sat, this.br, 1);
         this.drawCatAtPos(img, flipHorizontally);
         this.drawCatWrapAround(img, flipHorizontally);
         pg.pop();
@@ -789,7 +860,7 @@ class Cat {
         pg.push();
         pg.translate(this.pos.x, this.pos.y);
         this.flipIfNeeded(flipHorizontally);
-        pg.image(img, 0, 0, this.size, this.size);
+        pg.image(img, 0, 0);
         pg.pop();
     }
 
@@ -831,7 +902,7 @@ class Cat {
         pg.push();
         pg.translate(x, y);
         this.flipIfNeeded(flipHorizontally);
-        pg.image(img, 0, 0, this.size, this.size);
+        pg.image(img, 0, 0);
         pg.pop();
     }
 
