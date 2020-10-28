@@ -1,7 +1,8 @@
-p5.disableFriendlyErrors = true; // compute fester
+// p5.disableFriendlyErrors = true; // compute fester
 
 let mainCanvas;
 let pg;
+let cg;
 
 let pmouseIsPressed = false;
 let mouseIsInsidePolaroid = false;
@@ -15,7 +16,7 @@ let rectRoundedness = 100;
 
 let cats;
 let defaultCatCount = 7;
-//let defaultCatCount = 99;
+// let defaultCatCount = 99;
 let catCount = defaultCatCount;
 let catCountMinimum = 1;
 let catCountMaximum = 99;
@@ -112,6 +113,9 @@ function preload() {
 }
 
 function loadAsset(localPath, successCallback) {
+    if(successCallback == null) {
+        return loadImage("assets\\images\\" + localPath);
+    }
     return loadImage("assets\\images\\" + localPath, successCallback);
 }
 
@@ -122,8 +126,10 @@ function setup() {
     noSmooth();
     colorMode(HSB, 1, 1, 1, 1);
     imageMode(CORNER);
-    pg = createGraphics(width, height, WEBGL);
-    // pg.setAttributes('antialias', true);
+    pg = createGraphics(width, height);
+    cg = createGraphics(width, height, WEBGL);
+    cg.colorMode(HSB, 1, 1, 1, 1);
+    cg.imageMode(CENTER);
     pg.strokeCap(ROUND);
     pg.colorMode(HSB, 1, 1, 1, 1);
     pg.background(0);
@@ -161,10 +167,8 @@ function sortCatsByY() {
 // noinspection JSUnusedGlobalSymbols
 function draw() {
     mainCanvas.position((windowWidth - width) / 2, (windowHeight - height) / 2);
-    pg.clear();
     pg.background(grayscaleBackground);
     pg.push();
-    pg.translate(-width*.5, -height*.5);
 
     updateCursor();
     updateTutorial();
@@ -178,6 +182,9 @@ function draw() {
         drawPolaroidButton();
     }
     if (gameState === 'play') {
+        cg.clear();
+        cg.push();
+        cg.translate(-width*.5, -height*.5);
         updateHoldState();
         updateCatCountInsideTarget();
         drawTarget();
@@ -186,6 +193,8 @@ function draw() {
         updateDrawFreeCats();
         drawCursor();
         updateDrawHeldCat();
+        cg.pop();
+        pg.image(cg, width*.5, height*.5, width, height);
     }
     if (gameState === 'win') {
         drawWinningPolaroidImage();
@@ -439,7 +448,7 @@ function drawPolaroidButton() {
     pg.strokeCap(ROUND);
     pg.fill(grayscaleInteractive);
     pg.noStroke();
-    customCircle(polaroidRadius);
+    pg.circle(0,0,polaroidRadius*2);
     pg.stroke(grayscaleWhite);
     pg.strokeWeight(2 + 8 * catCountInsideTargetLerp);
     if (catCountInsideTargetJustFilled) {
@@ -449,10 +458,10 @@ function drawPolaroidButton() {
         drawPolaroidSmallRays();
     }
     if (catCountInsideTargetLerp >= .99) {
-        customCircle(polaroidRadius);
+        pg.circle(0,0,polaroidRadius*2);
     } else if (catCountInsideTargetLerp > 0.001) {
         // calling arc from -HALF_PI to -HALF_PI+.0001 is counter-intuitively drawn as a full circle, so we need a silly if-statement workaround
-        customStrokeArc(polaroidRadius, -HALF_PI, -HALF_PI + TAU * catCountInsideTargetLerp);
+        pg.arc(0,0,polaroidRadius*2,polaroidRadius*2, -HALF_PI, -HALF_PI + TAU * catCountInsideTargetLerp);
     }
     if (polaroidLoadingJustCompleted) {
         bigRayGrowthStarted = frameCount;
@@ -461,7 +470,7 @@ function drawPolaroidButton() {
         // same silly if-statement workaround as before
         pg.fill(grayscaleWhite);
         pg.noStroke();
-        customFillArc(polaroidRadius, -HALF_PI, -HALF_PI + TAU * ease(polaroidLoadingAnimation, 2));
+        pg.arc(0,0,polaroidRadius*2,polaroidRadius*2, -HALF_PI, -HALF_PI + TAU * ease(polaroidLoadingAnimation, 2));
     }
     if (polaroidLoadingAnimation >= 1 || gameState === 'win') {
         drawPolaroidBigRays();
@@ -658,43 +667,6 @@ function animateOscillation(offset) {
     return floor(frameCount / 22.5 + offset) % 2;
 }
 
-function customCircle(radius) {
-    pg.beginShape();
-    for(let i = 0; i < shapeDetail; i++)
-    {
-        let theta = map(i, 0, shapeDetail-1, 0, TAU);
-        pg.vertex(radius*cos(theta), radius*sin(theta), 0);
-    }
-    pg.endShape(CLOSE);
-}
-
-function customStrokeArc(radius, angleStart, angleStop) {
-    pg.push();
-    pg.beginShape();
-    for(let i = 0; i < shapeDetail; i++)
-    {
-        let theta = map(i, 0, shapeDetail-1, angleStart, angleStop);
-        pg.vertex(radius*cos(theta),radius*sin(theta), 0);
-    }
-    pg.endShape();
-    pg.pop();
-}
-
-
-function customFillArc(radius, angleStart, angleStop) {
-    pg.push();
-    pg.beginShape(TRIANGLE_STRIP);
-    for(let i = 0; i < shapeDetail; i++)
-    {
-        let theta = map(i, 0, shapeDetail-1, angleStart, angleStop);
-        pg.vertex(0,0);
-        pg.vertex(radius*cos(theta), radius*sin(theta), 0);
-    }
-    pg.endShape();
-    pg.pop();
-}
-
-
 // noinspection SpellCheckingInspection
 class Cat {
     // TODO drag tilt
@@ -735,7 +707,6 @@ class Cat {
             }
         }
         this.drawCatExitsTargetIndicator();
-        pg.translate(0,0,1); // cats need to be drawn in front of everything else
         this.draw();
     }
 
@@ -747,16 +718,16 @@ class Cat {
             this.exitTargetAnimationPos.y = this.pos.y;
         }
         this.pInsideTarget = insideTarget;
-
         let exitAnimation = animateGrowth(this.exitTargetAnimationStarted, this.exitTargetAnimationDuration);
         let alpha = 1 - exitAnimation;
         if (alpha > 0) {
             pg.push();
             pg.translate(this.exitTargetAnimationPos.x, this.exitTargetAnimationPos.y);
-            pg.stroke(grayscaleWhite , alpha);
+            pg.stroke(grayscaleWhite, alpha);
             pg.strokeWeight(3);
             pg.noFill();
-            customCircle(60 * exitAnimation);
+            let diameter =  120 * exitAnimation;
+            pg.ellipse(0,0,diameter, diameter);
             pg.pop();
         }
     }
@@ -846,27 +817,27 @@ class Cat {
 
 
     draw() {
-        pg.push();
+        cg.push();
         let frame = animateOscillation(this.timeOffset);
         let flipHorizontally = this.direction === 2 && !this.isHeld();
         let img = this.currentImage(frame);
-        pg.tint(this.hue, this.sat, this.br, 1);
+        cg.tint(this.hue, this.sat, this.br, 1);
         this.drawCatAtPos(img, flipHorizontally);
         this.drawCatWrapAround(img, flipHorizontally);
-        pg.pop();
+        cg.pop();
     }
 
     drawCatAtPos(img, flipHorizontally) {
-        pg.push();
-        pg.translate(this.pos.x, this.pos.y);
+        cg.push();
+        cg.translate(this.pos.x, this.pos.y);
         this.flipIfNeeded(flipHorizontally);
-        pg.image(img, 0, 0);
-        pg.pop();
+        cg.image(img, 0, 0);
+        cg.pop();
     }
 
     drawCatWrapAround(img, flipHorizontally) {
-        pg.push();
-        pg.translate(this.pos.x, this.pos.y);
+        cg.push();
+        cg.translate(this.pos.x, this.pos.y);
         let leftBorder = this.pos.x < this.size / 2;
         let rightBorder = this.pos.x > width - this.size / 2;
         let topBorder = this.pos.y < this.size / 2;
@@ -895,15 +866,15 @@ class Cat {
         if (bottomBorder) {
             this.drawCatWithOffset(img, flipHorizontally, 0, -height);
         }
-        pg.pop();
+        cg.pop();
     }
 
     drawCatWithOffset(img, flipHorizontally, x, y) {
-        pg.push();
-        pg.translate(x, y);
+        cg.push();
+        cg.translate(x, y);
         this.flipIfNeeded(flipHorizontally);
-        pg.image(img, 0, 0);
-        pg.pop();
+        cg.image(img, 0, 0);
+        cg.pop();
     }
 
     currentImage(frame) {
@@ -928,9 +899,9 @@ class Cat {
 
     flipIfNeeded(flipX) {
         if (flipX) {
-            pg.scale(-1, 1);
+            cg.scale(-1, 1);
         } else {
-            pg.scale(1, 1);
+            cg.scale(1, 1);
         }
     }
 
