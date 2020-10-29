@@ -33,6 +33,7 @@ let imageScale = 1;
 let held = null;
 let fadeSticks = false;
 let gameState = 'intro'; // known states: intro, play, win
+let introCatchphrase;
 
 let sticksFadeoutDelay = 60;
 let sticksFadeoutDuration = 60;
@@ -125,6 +126,7 @@ function setup() {
     noSmooth();
     colorMode(HSB, 1, 1, 1, 1);
     imageMode(CORNER);
+    introCatchphrase = generateIntroCatchphrase();
     pg = createGraphics(width, height);
     cg = createGraphics(width, height, WEBGL);
     cg.colorMode(HSB, 1, 1, 1, 1);
@@ -134,8 +136,9 @@ function setup() {
     pg.background(0);
     pg.imageMode(CENTER);
     pg.rectMode(CENTER);
+    pg.noSmooth();
     pg.textFont(fontComicSans);
-    polaroidPos = createVector(width - 200, height * .5);
+    polaroidPos = createVector(width - 300, height * .5);
     targetRectPos = createVector(width * .3, height * .5);
     targetRectSize = createVector(1366 * .4, 768 * .4);
 }
@@ -203,7 +206,7 @@ function draw() {
     if (gameState === 'intro' || gameState === 'win') {
         updateDrawCatCountSettings();
     }
-    displayFPS();
+    // displayFPS();
     pg.pop();
     image(pg, 0, 0, width, height);
     pmouseIsPressed = mouseIsPressed;
@@ -224,8 +227,31 @@ function mouseReleased() {
 // noinspection JSUnusedGlobalSymbols
 function keyPressed() {
     if(gameState === 'play' && keyCode === ESCAPE) {
+        generateIntroCatchphrase();
         gameState = 'intro';
     }
+}
+
+function generateIntroCatchphrase() {
+    let justOne = false;
+    if(justOne) {
+        return 'pls rember\nwen you feel scare or frigten\nnever forget ttimes wen u feeled happy\nwen day is dark\nalways rember happy day';
+    }
+    return introCatchphrase = random([
+        'early access',
+        'for your pleasure',
+        'you can do it',
+        'just like real life',
+        'cuteness overload',
+        '100% instagrammable',
+        'share this with your mom',
+        'no thoughts\nhead empty',
+        'free range cats',
+        'cats love me',
+        'your advertisement here',
+        'get your warm fuzzies here',
+        'wen day is dark\nalways rember happy day',
+    ]);
 }
 
 function drawIntro() {
@@ -233,16 +259,17 @@ function drawIntro() {
     pg.translate(width * .5, height * .45);
     pg.image(title, 0, 0);
     pg.translate(width * .035, -height * .1);
-    pg.scale(1);
+    pg.scale(2);
     pg.image(catTitle[animateOscillation()], 0, 0);
     pg.pop();
     pg.push();
-    pg.translate(width * .65, height * .25);
-    pg.fill(grayscaleInteractiveHover);
+    pg.translate(width * .75, height * .25);
+    pg.fill(grayscaleInteractive);
     pg.noStroke();
     pg.rotate(PI * .15);
-    pg.textSize(40);
-    pg.text('early access', 0, 0);
+    pg.textAlign(CENTER,CENTER);
+    pg.textSize(35);
+    pg.text(introCatchphrase, 0, 0);
     pg.pop();
 }
 
