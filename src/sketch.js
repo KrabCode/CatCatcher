@@ -55,7 +55,6 @@ let smallRayAnimationStarted = -smallRayAnimationDuration * 2;
 
 let rayRotationTime = 0;
 let rayCount = 12;
-let shapeDetail = 200;
 
 let targetRectPos;
 let targetRectSize;
@@ -696,6 +695,7 @@ class Cat {
         this.mouseInteract();
         if (this.isHeld()) {
             this.stance = 0;
+            this.stanceChangedFrame = frameCount;
         } else {
             this.updateStance();
             if (this.isInMovingStance()) {
