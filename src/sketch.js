@@ -166,7 +166,7 @@ function draw() {
     if (gameState === 'intro') {
         // updateDrawIntroShader();
         drawIntro();
-        updateDrawPlayButton(labelPlayButton);
+        updateDrawBigButton(labelPlayButton);
     }
     if (gameState === 'play' || gameState === 'win') {
         updatePolaroidButton();
@@ -189,7 +189,7 @@ function draw() {
     }
     if (gameState === 'win') {
         drawWinningPolaroidImage();
-        updateDrawPlayButton(labelAgainButton);
+        updateDrawBigButton(labelAgainButton);
         drawCongratsMessage();
     }
     if (gameState === 'intro' || gameState === 'win') {
@@ -240,15 +240,14 @@ function generateIntroCatchphrase() {
         return 'pls rember\nwen you feel scare or frigten\nnever forget ttimes wen u feeled happy\nwen day is dark\nalways rember happy day';
     }
     return introCatchphrase = random([
-        'early access',
         'for your pleasure',
         'you can do it',
         'just like real life',
         'cuteness overload',
-        '100% instagrammable',
         'share this with your mom',
-        'no thoughts\nhead empty',
+        'no thoughts, head empty',
         'free range cats',
+        'we like cats a lot apparently',
         'look at them go',
         'get your warm fuzzies here',
         'wen day is dark\nalways rember happy day',
@@ -316,8 +315,8 @@ function drawTextLink(x,y, prefixText, linkText, linkUrl) {
 }
 
 function updateDrawCatCountSettings() {
-    let catCountSub = updateDrawButton(width * .1, height * .9, 70, 40, null, '-', 40);
-    let catCountAdd = updateDrawButton(width * .25, height * .9, 70, 40, null, '+', 40);
+    let catCountSub = updateDrawButton(width * .1, height * .9, 70, 40, null, '-', 40, true);
+    let catCountAdd = updateDrawButton(width * .25, height * .9, 70, 40, null, '+', 40, true);
     if (catCountSub) {
         catCount--;
     }
@@ -340,10 +339,14 @@ function updateDrawCatCountSettings() {
         difficultyIndicator += 'normal';
     } else if (catCount < 24) {
         difficultyIndicator += 'hard';
-    } else if (catCount < 32) {
-        difficultyIndicator += 'brutal';
-    } else {
+    } else if(catCount < 32){
         difficultyIndicator += 'nightmare';
+    } else if(catCount < 40) {
+        difficultyIndicator += 'crazy cat lady';
+    } else if(catCount < 48) {
+        difficultyIndicator += 'cat shelter';
+    } else  {
+        difficultyIndicator += 'impossible';
     }
     pg.fill(grayscaleInteractiveHover);
     pg.textAlign(LEFT, CENTER);
@@ -351,14 +354,18 @@ function updateDrawCatCountSettings() {
     pg.pop();
 }
 
-function updateDrawPlayButton(label) {
-    let clicked = updateDrawButton(width * .5, height * .88, 300, 100, label[animateOscillation()]);
+function updateDrawBigButton(label) {
+    let clicked = updateDrawButton(width * .5, height * .88, 300, 100, label[animateOscillation()], undefined, undefined, false);
     if (clicked) {
         restartGame();
     }
 }
 
-function updateDrawButton(x, y, w, h, labelImage, labelText, textScale) {
+let repeatingMousePressStarted;
+let repeatingMousePressWaitDuration = 20;
+let repeatingSpeed = 6;
+
+function updateDrawButton(x, y, w, h, labelImage, labelText, textScale, repeating) {
     let clicked = false;
     pg.push();
     pg.noStroke();
@@ -368,8 +375,16 @@ function updateDrawButton(x, y, w, h, labelImage, labelText, textScale) {
         pg.fill(grayscaleInteractiveHover);
         cursor('pointer');
     }
-    if (hover && mouseIsPressed && !pmouseIsPressed) {
+    let shouldRepeat = repeating && frameCount > repeatingMousePressStarted + repeatingMousePressWaitDuration;
+    if (hover && mouseIsPressed && (shouldRepeat || !pmouseIsPressed)) {
         clicked = true;
+        let skipThisRepeat = pmouseIsPressed && shouldRepeat && frameCount % repeatingSpeed !== 0;
+        if(skipThisRepeat) {
+            clicked = false;
+        }
+        if(repeating != null && !pmouseIsPressed) {
+            repeatingMousePressStarted = frameCount;
+        }
     }
     pg.translate(x, y);
     if (hover) {
