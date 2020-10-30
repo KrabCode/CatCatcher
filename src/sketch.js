@@ -331,26 +331,27 @@ function updateDrawCatCountSettings() {
     pg.textStyle();
     pg.textSize(30);
     let catCountLabel = catCount + " cat" + (catCount > 1 ? 's' : '');
-    pg.text(catCountLabel, width * .2125, height * .895);
-    let difficultyIndicator = 'difficulty: ';
-    if (catCount < 8) {
+    pg.translate(width * .2125, height * .895);
+    pg.text(catCountLabel, 0, 0);
+    let difficultyIndicator = '';
+    if(catCount < 15) {
         difficultyIndicator += 'easy';
-    } else if (catCount < 16) {
-        difficultyIndicator += 'normal';
-    } else if (catCount < 24) {
-        difficultyIndicator += 'hard';
-    } else if(catCount < 32){
+    } else if (catCount < 25) {
+        difficultyIndicator += 'challenging';
+    } else if(catCount < 35){
         difficultyIndicator += 'nightmare';
-    } else if(catCount < 40) {
+    } else if(catCount < 45) {
         difficultyIndicator += 'crazy cat lady';
-    } else if(catCount < 48) {
+    } else if(catCount < 55) {
         difficultyIndicator += 'cat shelter';
+    }  else if(catCount < 65) {
+        difficultyIndicator += 'catastrophy';
     } else  {
         difficultyIndicator += 'impossible';
     }
     pg.fill(grayscaleInteractiveHover);
-    pg.textAlign(LEFT, CENTER);
-    pg.text(difficultyIndicator, width * .08, height * .82);
+    pg.textAlign(CENTER, CENTER);
+    pg.text(difficultyIndicator, -width * .035, -height * .1);
     pg.pop();
 }
 
@@ -656,7 +657,7 @@ function winGame() {
     winningPolaroidAngle = random(-PI * .05, PI * .05);
     winningPolaroidImage = pg.get(targetRectPos.x - targetRectSize.x * .5, targetRectPos.y - targetRectSize.y * .5, targetRectSize.x, targetRectSize.y);
     let newWinMessage = 'You win!\n';
-    if (catCount >= 16) {
+    if (catCount >= 25) {
         newWinMessage += random([
             'Impressive! You got all ' + catCount + ' cats.',
             'Amazing! You got all ' + catCount + ' cats.',
