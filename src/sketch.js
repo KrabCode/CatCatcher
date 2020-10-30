@@ -20,9 +20,14 @@ let defaultCatCount = 7;
 let catCount = defaultCatCount;
 let catCountMinimum = 1;
 let catCountMaximum = 99;
+
 let winMessage;
-let winningPolaroidAngle;
-let winningPolaroidImage;
+let winningImageAngle;
+let winningImageBackgroundCount = 3;
+let winningImageAngles;
+let winningImage;
+let winScreenNewspaperAnimationDuration = 40;
+let winScrenStarted = -winScreenNewspaperAnimationDuration;
 
 let tutorialPutCatsHereUnderstood = false;
 let tutorialPutCatsHereFadeoutDuration = 100;
@@ -113,7 +118,7 @@ function preload() {
 }
 
 function loadAsset(localPath, successCallback) {
-    if(successCallback == null) {
+    if (successCallback == null) {
         return loadImage("assets\\images\\" + localPath);
     }
     return loadImage("assets\\images\\" + localPath, successCallback);
@@ -144,7 +149,7 @@ function setup() {
 }
 
 function sortCatsByY() {
-    cats.sort(function(a, b) {
+    cats.sort(function (a, b) {
         if (a.pos.y < b.pos.y) {
             return -1;
         }
@@ -175,7 +180,7 @@ function draw() {
     if (gameState === 'play') {
         cg.clear();
         cg.push();
-        cg.translate(-width*.5, -height*.5);
+        cg.translate(-width * .5, -height * .5);
         updateHoldState();
         updateCatCountInsideTarget();
         drawTarget();
@@ -185,12 +190,12 @@ function draw() {
         drawCursor();
         updateDrawHeldCat();
         cg.pop();
-        pg.image(cg, width*.5, height*.5, width, height);
+        pg.image(cg, width * .5, height * .5, width, height);
     }
     if (gameState === 'win') {
-        drawWinningPolaroidImage();
+        drawWinningImage();
         updateDrawBigButton(labelAgainButton);
-        drawCongratsMessage();
+        drawWinMessage();
     }
     if (gameState === 'intro' || gameState === 'win') {
         updateDrawCatCountSettings();
@@ -228,7 +233,7 @@ function mouseReleased() {
 
 // noinspection JSUnusedGlobalSymbols
 function keyPressed() {
-    if(gameState === 'play' && keyCode === ESCAPE) {
+    if (gameState === 'play' && keyCode === ESCAPE) {
         generateIntroCatchphrase();
         gameState = 'intro';
     }
@@ -236,7 +241,7 @@ function keyPressed() {
 
 function generateIntroCatchphrase() {
     let justOne = false;
-    if(justOne) {
+    if (justOne) {
         return 'pls rember\nwen you feel scare or frigten\nnever forget ttimes wen u feeled happy\nwen day is dark\nalways rember happy day';
     }
     return introCatchphrase = random([
@@ -276,26 +281,26 @@ function drawIntroCatchphrase() {
     pg.fill(grayscaleInteractive);
     pg.noStroke();
     pg.rotate(PI * .15);
-    pg.textAlign(CENTER,CENTER);
+    pg.textAlign(CENTER, CENTER);
     pg.textSize(35);
     pg.text(introCatchphrase, 0, 0);
     pg.pop();
 }
 
 function drawIntroCredits() {
-     //
+    //
     drawTextLink(width * .78, height * .80, 'a game by ', 'Krab', 'https://www.instagram.com/krabcode/');
     drawTextLink(width * .78, height * .88, 'with art by ', '235', 'https://www.instagram.com/ahojte235/');
 
 }
 
-function drawTextLink(x,y, prefixText, linkText, linkUrl) {
+function drawTextLink(x, y, prefixText, linkText, linkUrl) {
     pg.push();
     pg.fill(grayscaleInteractive);
-    pg.textAlign(LEFT,TOP);
+    pg.textAlign(LEFT, TOP);
     pg.textSize(35);
     pg.text(prefixText, x, y);
-    if(isPointInRectangle(mouseX, mouseY, x+pg.textWidth(prefixText), y, pg.textWidth(linkText), 45)) {
+    if (isPointInRectangle(mouseX, mouseY, x + pg.textWidth(prefixText), y, pg.textWidth(linkText), 45)) {
         pg.fill(grayscaleWhite);
         cursor('pointer');
         pg.push();
@@ -304,13 +309,13 @@ function drawTextLink(x,y, prefixText, linkText, linkUrl) {
         pg.fill(grayscaleWhite);
         pg.text(linkUrl, x, y + 45);
         pg.pop();
-        if(mouseIsPressed && !pmouseIsPressed) {
+        if (mouseIsPressed && !pmouseIsPressed) {
             open(linkUrl);
         }
-    }else {
+    } else {
         cursor('arrow')
     }
-    pg.text(linkText, x+pg.textWidth(prefixText), y);
+    pg.text(linkText, x + pg.textWidth(prefixText), y);
     pg.pop();
 }
 
@@ -334,19 +339,21 @@ function updateDrawCatCountSettings() {
     pg.translate(width * .2125, height * .895);
     pg.text(catCountLabel, 0, 0);
     let difficultyIndicator = '';
-    if(catCount < 15) {
+    if (catCount < 5) {
+        difficultyIndicator += 'very easy';
+    } else if (catCount < 15) {
         difficultyIndicator += 'easy';
     } else if (catCount < 25) {
         difficultyIndicator += 'challenging';
-    } else if(catCount < 35){
+    } else if (catCount < 35) {
         difficultyIndicator += 'nightmare';
-    } else if(catCount < 45) {
+    } else if (catCount < 45) {
         difficultyIndicator += 'crazy cat lady';
-    } else if(catCount < 55) {
+    } else if (catCount < 55) {
         difficultyIndicator += 'cat shelter';
-    }  else if(catCount < 65) {
+    } else if (catCount < 65) {
         difficultyIndicator += 'catastrophy';
-    } else  {
+    } else {
         difficultyIndicator += 'impossible';
     }
     pg.fill(grayscaleInteractiveHover);
@@ -380,10 +387,10 @@ function updateDrawButton(x, y, w, h, labelImage, labelText, textScale, repeatin
     if (hover && mouseIsPressed && (shouldRepeat || !pmouseIsPressed)) {
         clicked = true;
         let skipThisRepeat = pmouseIsPressed && shouldRepeat && frameCount % repeatingSpeed !== 0;
-        if(skipThisRepeat) {
+        if (skipThisRepeat) {
             clicked = false;
         }
-        if(repeating != null && !pmouseIsPressed) {
+        if (repeating != null && !pmouseIsPressed) {
             repeatingMousePressStarted = frameCount;
         }
     }
@@ -413,7 +420,7 @@ function updateDrawButton(x, y, w, h, labelImage, labelText, textScale, repeatin
     return clicked;
 }
 
-function drawCongratsMessage() {
+function drawWinMessage() {
     pg.push();
     pg.fill(grayscaleWhite);
     pg.translate(width * .5, height * .1);
@@ -424,17 +431,30 @@ function drawCongratsMessage() {
     pg.pop();
 }
 
-function drawWinningPolaroidImage() {
+function drawWinningImage() {
     pg.push();
     pg.translate(targetRectPos.x, targetRectPos.y);
-    pg.rotate(winningPolaroidAngle);
+    let animation = animate(winScrenStarted, winScreenNewspaperAnimationDuration);
+
     pg.imageMode(CENTER);
     pg.rectMode(CENTER);
-    pg.image(winningPolaroidImage, 0, 0);
-    pg.noFill();
-    pg.stroke(grayscaleWhite);
     pg.strokeWeight(5);
-    pg.rect(0, 0, winningPolaroidImage.width, winningPolaroidImage.height);
+    if (animation >= 1) {
+        for (let i = 0; i < winningImageBackgroundCount; i++) {
+            pg.push();
+            pg.rotate(winningImageAngles[i]);
+            pg.stroke(grayscaleInteractiveHover);
+            pg.fill(grayscaleInteractive);
+            pg.rect(0, 0, winningImage.width, winningImage.height);
+            pg.pop();
+        }
+    }
+    pg.scale(pow(animation, 2.5));
+    pg.rotate(animation * TAU * 2 + winningImageAngle);
+    pg.image(winningImage, 0, 0);
+    pg.stroke(grayscaleWhite);
+    pg.noFill();
+    pg.rect(0, 0, winningImage.width, winningImage.height);
     pg.pop();
 }
 
@@ -450,7 +470,7 @@ function drawTutorial() {
     }
     if (!tutorialTakeAPhotoUnderstood) {
         pg.tint(.5);
-        pg.image(labelTutorialTakeAPhoto, polaroidPos.x - polaroidDiameter * .5, polaroidPos.y + polaroidDiameter*1.1);
+        pg.image(labelTutorialTakeAPhoto, polaroidPos.x - polaroidDiameter * .5, polaroidPos.y + polaroidDiameter * 1.1);
         pg.image(labelTutorialBeQuick, polaroidPos.x - polaroidDiameter * .5, polaroidPos.y + polaroidDiameter * 1.25);
     }
     pg.pop();
@@ -532,7 +552,7 @@ function drawPolaroidButton() {
     pg.strokeCap(ROUND);
     pg.fill(grayscaleInteractive);
     pg.noStroke();
-    pg.circle(0,0,polaroidRadius*2);
+    pg.circle(0, 0, polaroidRadius * 2);
     pg.stroke(grayscaleWhite);
     pg.strokeWeight(2 + 8 * catCountInsideTargetLerp);
     if (catCountInsideTargetJustFilled) {
@@ -542,10 +562,10 @@ function drawPolaroidButton() {
         drawPolaroidSmallRays();
     }
     if (catCountInsideTargetLerp >= .99) {
-        pg.circle(0,0,polaroidRadius*2);
+        pg.circle(0, 0, polaroidRadius * 2);
     } else if (catCountInsideTargetLerp > 0.001) {
         // calling arc from -HALF_PI to -HALF_PI+.0001 is counter-intuitively drawn as a full circle, so we need a silly if-statement workaround
-        pg.arc(0,0,polaroidRadius*2,polaroidRadius*2, -HALF_PI, -HALF_PI + TAU * catCountInsideTargetLerp);
+        pg.arc(0, 0, polaroidRadius * 2, polaroidRadius * 2, -HALF_PI, -HALF_PI + TAU * catCountInsideTargetLerp);
     }
     if (polaroidLoadingJustCompleted) {
         bigRayGrowthStarted = frameCount;
@@ -554,7 +574,7 @@ function drawPolaroidButton() {
         // same silly if-statement workaround as before
         pg.fill(grayscaleWhite);
         pg.noStroke();
-        pg.arc(0,0,polaroidRadius*2,polaroidRadius*2, -HALF_PI, -HALF_PI + TAU * ease(polaroidLoadingAnimation, 2));
+        pg.arc(0, 0, polaroidRadius * 2, polaroidRadius * 2, -HALF_PI, -HALF_PI + TAU * ease(polaroidLoadingAnimation, 2));
     }
     if (polaroidLoadingAnimation >= 1 || gameState === 'win') {
         drawPolaroidBigRays();
@@ -654,8 +674,23 @@ function drawCursor() {
 }
 
 function winGame() {
-    winningPolaroidAngle = random(-PI * .05, PI * .05);
-    winningPolaroidImage = pg.get(targetRectPos.x - targetRectSize.x * .5, targetRectPos.y - targetRectSize.y * .5, targetRectSize.x, targetRectSize.y);
+    winningImageAngle = nextWinningImageAngle();
+    winningImageAngles = [];
+    for (let i = 0; i < winningImageBackgroundCount; i++) {
+        winningImageAngles.push(nextWinningImageAngle());
+    }
+    winningImage = pg.get(targetRectPos.x - targetRectSize.x * .5, targetRectPos.y - targetRectSize.y * .5, targetRectSize.x, targetRectSize.y);
+    winMessage = generateNewWinMessage();
+    winScrenStarted = frameCount;
+    catCount++;
+    gameState = 'win';
+}
+
+function nextWinningImageAngle() {
+    return random(-PI * .05, PI * .05);
+}
+
+function generateNewWinMessage() {
     let newWinMessage = 'You win!\n';
     if (catCount >= 25) {
         newWinMessage += random([
@@ -674,8 +709,7 @@ function winGame() {
     } else {
         newWinMessage += 'You broke the game.';
     }
-    winMessage = newWinMessage;
-    gameState = 'win';
+    return newWinMessage;
 }
 
 function restartGame() {
@@ -784,11 +818,11 @@ class Cat {
         } else {
             this.updateStance();
             if (this.isInMovingStance()) {
-               this.updateDirection();
-               this.move();
+                this.updateDirection();
+                this.move();
             }
             if (!this.isInSleepingStance()) {
-               this.checkCollisions();
+                this.checkCollisions();
             }
         }
         this.drawCatExitsTargetIndicator();
@@ -811,8 +845,8 @@ class Cat {
             pg.stroke(grayscaleWhite, alpha);
             pg.strokeWeight(3);
             pg.noFill();
-            let diameter =  120 * exitAnimation;
-            pg.ellipse(0,0,diameter, diameter);
+            let diameter = 120 * exitAnimation;
+            pg.ellipse(0, 0, diameter, diameter);
             pg.pop();
         }
     }
