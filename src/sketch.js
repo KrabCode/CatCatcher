@@ -143,17 +143,6 @@ function setup() {
     targetRectSize = createVector(1366 * .4, 768 * .4);
 }
 
-// noinspection JSUnusedGlobalSymbols
-function displayFPS() {
-    pg.push();
-    pg.textAlign(LEFT, CENTER);
-    pg.textSize(40);
-    pg.fill(grayscaleInteractiveHover);
-    pg.noStroke();
-    pg.text('fps ' + frameRate().toFixed(0), 20, 40);
-    pg.pop();
-}
-
 function sortCatsByY() {
     cats.sort(function(a, b) {
         if (a.pos.y < b.pos.y) {
@@ -213,10 +202,23 @@ function draw() {
 }
 
 // noinspection JSUnusedGlobalSymbols
+function displayFPS() {
+    pg.push();
+    pg.textAlign(LEFT, CENTER);
+    pg.textSize(40);
+    pg.fill(grayscaleInteractiveHover);
+    pg.noStroke();
+    pg.text('fps ' + frameRate().toFixed(0), 20, 40);
+    pg.pop();
+}
+
+// noinspection JSUnusedGlobalSymbols
 function mousePressed() {
     if (gameState === 'play' && polaroidLoadingAnimation >= 1 && mouseIsInsidePolaroid) {
         winGame();
     }
+    pmouseIsPressed = false;
+    mouseIsPressed = true;
 }
 
 // noinspection JSUnusedGlobalSymbols
@@ -247,14 +249,19 @@ function generateIntroCatchphrase() {
         'share this with your mom',
         'no thoughts\nhead empty',
         'free range cats',
-        'cats love me',
-        'your advertisement here',
+        'look at them go',
         'get your warm fuzzies here',
         'wen day is dark\nalways rember happy day',
     ]);
 }
 
 function drawIntro() {
+    drawIntroTitleWithCat();
+    drawIntroCatchphrase();
+    drawIntroCredits();
+}
+
+function drawIntroTitleWithCat() {
     pg.push();
     pg.translate(width * .5, height * .45);
     pg.image(title, 0, 0);
@@ -262,6 +269,9 @@ function drawIntro() {
     pg.scale(2);
     pg.image(catTitle[animateOscillation()], 0, 0);
     pg.pop();
+}
+
+function drawIntroCatchphrase() {
     pg.push();
     pg.translate(width * .75, height * .25);
     pg.fill(grayscaleInteractive);
@@ -270,6 +280,38 @@ function drawIntro() {
     pg.textAlign(CENTER,CENTER);
     pg.textSize(35);
     pg.text(introCatchphrase, 0, 0);
+    pg.pop();
+}
+
+function drawIntroCredits() {
+     //
+    drawTextLink(width * .78, height * .80, 'a game by ', 'Krab', 'https://www.instagram.com/krabcode/');
+    drawTextLink(width * .78, height * .88, 'with art by ', '235', 'https://www.instagram.com/ahojte235/');
+
+}
+
+function drawTextLink(x,y, prefixText, linkText, linkUrl) {
+    pg.push();
+    pg.fill(grayscaleInteractive);
+    pg.textAlign(LEFT,TOP);
+    pg.textSize(35);
+    pg.text(prefixText, x, y);
+    if(isPointInRectangle(mouseX, mouseY, x+pg.textWidth(prefixText), y, pg.textWidth(linkText), 45)) {
+        pg.fill(grayscaleWhite);
+        cursor('pointer');
+        pg.push();
+        pg.rectMode(CENTER);
+        pg.textSize(14);
+        pg.fill(grayscaleWhite);
+        pg.text(linkUrl, x, y + 45);
+        pg.pop();
+        if(mouseIsPressed && !pmouseIsPressed) {
+            open(linkUrl);
+        }
+    }else {
+        cursor('arrow')
+    }
+    pg.text(linkText, x+pg.textWidth(prefixText), y);
     pg.pop();
 }
 
