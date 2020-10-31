@@ -15,19 +15,21 @@ let grayscaleWhite = 1;
 let rectRoundedness = 100;
 
 let cats;
-let defaultCatCount = 7;
+let defaultCatCount = 5;
 // let defaultCatCount = 99;
 let catCount = defaultCatCount;
 let catCountMinimum = 1;
 let catCountMaximum = 99;
+let lastWinCatCount = catCount;
 
 let winMessage;
 let winningImageAngle;
 let winningImageBackgroundCount = 3;
 let winningImageAngles;
 let winningImage;
-let winScreenNewspaperAnimationDuration = 40;
-let winScrenStarted = -winScreenNewspaperAnimationDuration;
+let newspaperAnimationDuration = 40;
+let difficultyAnimationDuration = 80;
+let winScrenStarted = -newspaperAnimationDuration;
 
 let tutorialPutCatsHereUnderstood = false;
 let tutorialPutCatsHereFadeoutDuration = 100;
@@ -192,13 +194,13 @@ function draw() {
         cg.pop();
         pg.image(cg, width * .5, height * .5, width, height);
     }
+    if (gameState === 'intro' || gameState === 'win') {
+        updateDrawCatCountSettings();
+    }
     if (gameState === 'win') {
         drawWinningImage();
         updateDrawBigButton(labelAgainButton);
         drawWinMessage();
-    }
-    if (gameState === 'intro' || gameState === 'win') {
-        updateDrawCatCountSettings();
     }
     // displayFPS();
     pg.pop();
@@ -247,15 +249,14 @@ function generateIntroCatchphrase() {
     return introCatchphrase = random([
         'for your pleasure',
         'you can do it',
+        'everyone loves cats',
         'just like real life',
         'cuteness overload',
         'share this with your mom',
         'no thoughts, head empty',
         'free range cats',
-        'we like cats a lot apparently',
         'look at them go',
-        'get your warm fuzzies here',
-        'wen day is dark\nalways rember happy day',
+        'get your warm fuzzies here'
     ]);
 }
 
@@ -282,16 +283,16 @@ function drawIntroCatchphrase() {
     pg.noStroke();
     pg.rotate(PI * .15);
     pg.textAlign(CENTER, CENTER);
-    pg.textSize(35);
+    pg.textSize(26);
     pg.text(introCatchphrase, 0, 0);
     pg.pop();
 }
 
 function drawIntroCredits() {
-    //
-    drawTextLink(width * .78, height * .80, 'a game by ', 'Krab', 'https://www.instagram.com/krabcode/');
-    drawTextLink(width * .78, height * .88, 'with art by ', '235', 'https://www.instagram.com/ahojte235/');
-
+    drawTextLink(width * .78, height * .80,
+        'a game by ', 'Krab', 'https://www.instagram.com/krabcode/');
+    drawTextLink(width * .78, height * .88,
+        'with art by ', '235', 'https://www.instagram.com/ahojte235/');
 }
 
 function drawTextLink(x, y, prefixText, linkText, linkUrl) {
@@ -335,30 +336,61 @@ function updateDrawCatCountSettings() {
     pg.textAlign(RIGHT, CENTER);
     pg.textStyle();
     pg.textSize(30);
-    let catCountLabel = catCount + " cat" + (catCount > 1 ? 's' : '');
+
+    let count = catCount;
+    if(gameState === 'win' && frameCount < winScrenStarted + newspaperAnimationDuration) {
+        count = lastWinCatCount; // display win count for a brief moment to give the +1 change more impact
+    }
+    let catCountLabel = count + " cat" + (count > 1 ? 's' : '');
     pg.translate(width * .2125, height * .895);
     pg.text(catCountLabel, 0, 0);
-    let difficultyIndicator = '';
-    if (catCount < 5) {
-        difficultyIndicator += 'very easy';
-    } else if (catCount < 15) {
-        difficultyIndicator += 'easy';
-    } else if (catCount < 25) {
-        difficultyIndicator += 'challenging';
-    } else if (catCount < 35) {
-        difficultyIndicator += 'nightmare';
-    } else if (catCount < 45) {
-        difficultyIndicator += 'crazy cat lady';
-    } else if (catCount < 55) {
-        difficultyIndicator += 'cat shelter';
-    } else if (catCount < 65) {
-        difficultyIndicator += 'catastrophy';
-    } else {
-        difficultyIndicator += 'impossible';
-    }
+
+    pg.translate(-width * .035, 0);
+    drawAutomaticDifficultyIncrementAnimation();
+
+    let difficultyIndicator = labelByDifficulty();
     pg.fill(grayscaleInteractiveHover);
     pg.textAlign(CENTER, CENTER);
-    pg.text(difficultyIndicator, -width * .035, -height * .1);
+    pg.text(difficultyIndicator, 0, -height * .1);
+    pg.pop();
+}
+
+function labelByDifficulty() {
+    if (catCount < 5) {
+        return 'very easy';
+    } else if (catCount < 15) {
+        return 'easy';
+    } else if (catCount < 25) {
+        return 'challenging';
+    } else if (catCount < 35) {
+        return 'nightmare';
+    } else if (catCount < 45) {
+        return 'crazy cat lady';
+    } else if (catCount < 55) {
+        return 'cat shelter';
+    } else if (catCount < 65) {
+        return 'catastrophy';
+    } else {
+        return 'impossible';
+    }
+}
+
+function drawAutomaticDifficultyIncrementAnimation() {
+    if(gameState !== 'win') {
+        return;
+    }
+    let difficultyAnimationStarted = winScrenStarted + newspaperAnimationDuration;
+    let difficultyAnimation = animate(difficultyAnimationStarted, difficultyAnimationDuration);
+    if (difficultyAnimation <= 0) {
+        return;
+    }
+    let alpha = 1 - difficultyAnimation;
+    pg.push();
+    pg.noStroke();
+    pg.fill(grayscaleWhite, alpha);
+    pg.textSize(60);
+    pg.textAlign(CENTER, CENTER);
+    pg.text('+', 0, -height * .04 - difficultyAnimation * height * .05);
     pg.pop();
 }
 
@@ -434,12 +466,11 @@ function drawWinMessage() {
 function drawWinningImage() {
     pg.push();
     pg.translate(targetRectPos.x, targetRectPos.y);
-    let animation = animate(winScrenStarted, winScreenNewspaperAnimationDuration);
-
+    let newspaperAnimation = animate(winScrenStarted, newspaperAnimationDuration);
     pg.imageMode(CENTER);
     pg.rectMode(CENTER);
     pg.strokeWeight(5);
-    if (animation >= 1) {
+    if (newspaperAnimation >= 1) {
         for (let i = 0; i < winningImageBackgroundCount; i++) {
             pg.push();
             pg.rotate(winningImageAngles[i]);
@@ -449,8 +480,8 @@ function drawWinningImage() {
             pg.pop();
         }
     }
-    pg.scale(pow(animation, 2.5));
-    pg.rotate(animation * TAU * 2 + winningImageAngle);
+    pg.scale(pow(newspaperAnimation, 2.5));
+    pg.rotate(newspaperAnimation * TAU * 2 + winningImageAngle);
     pg.image(winningImage, 0, 0);
     pg.stroke(grayscaleWhite);
     pg.noFill();
@@ -680,8 +711,9 @@ function winGame() {
         winningImageAngles.push(nextWinningImageAngle());
     }
     winningImage = pg.get(targetRectPos.x - targetRectSize.x * .5, targetRectPos.y - targetRectSize.y * .5, targetRectSize.x, targetRectSize.y);
-    winMessage = generateNewWinMessage();
     winScrenStarted = frameCount;
+    lastWinCatCount = catCount;
+    winMessage = generateNewWinMessage(catCount);
     catCount++;
     gameState = 'win';
 }
@@ -690,21 +722,21 @@ function nextWinningImageAngle() {
     return random(-PI * .05, PI * .05);
 }
 
-function generateNewWinMessage() {
+function generateNewWinMessage(n) {
     let newWinMessage = 'You win!\n';
-    if (catCount >= 25) {
+    if (n >= 25) {
         newWinMessage += random([
-            'Impressive! You got all ' + catCount + ' cats.',
-            'Amazing! You got all ' + catCount + ' cats.',
+            'Impressive! You got all ' + n + ' cats.',
+            'Amazing! You got all ' + n + ' cats.',
         ]);
-    } else if (catCount > 1) {
+    } else if (n > 1) {
         newWinMessage += random([
-            'You caught ' + catCount + ' fidgety cats on camera!',
-            'You took a photo of ' + catCount + ' mischievous cats!',
-            'You photographed ' + catCount + ' restless cats!',
-            'You managed to herd ' + catCount + ' rowdy kittens!',
+            'You caught ' + n + ' fidgety cats on camera!',
+            'You took a photo of ' + n + ' mischievous cats!',
+            'You photographed ' + n + ' restless cats!',
+            'You managed to herd ' + n + ' rowdy kittens!',
         ]);
-    } else if (catCount === 1) {
+    } else if (n === 1) {
         newWinMessage += 'You took a photo of a lonely cat...';
     } else {
         newWinMessage += 'You broke the game.';
@@ -787,7 +819,7 @@ function animateOscillation(offset) {
 
 // noinspection SpellCheckingInspection
 class Cat {
-    // TODO drag tilt
+
     constructor() {
         this.id = this.uuid();
         this.pos = createVector(random(width), random(height));
