@@ -11,6 +11,7 @@ let useImageCursor;
 let grayscaleBackground = 0.15;
 let grayscaleInteractive = 0.35;
 let grayscaleInteractiveHover = 0.5;
+let grayscaleBright = 0.75;
 let grayscaleWhite = 1;
 let rectRoundedness = 100;
 
@@ -303,12 +304,12 @@ function drawIntroCredits() {
 
 function drawTextLink(x, y, prefixText, linkText, linkUrl) {
     pg.push();
-    pg.fill(grayscaleInteractive);
     pg.textAlign(LEFT, TOP);
     pg.textSize(35);
+    let isOverLink = isPointInRectangle(mouseX, mouseY, x, y,  pg.textWidth(prefixText) + pg.textWidth(linkText), 45);
+    pg.fill(isOverLink? grayscaleBright : grayscaleInteractive);
     pg.text(prefixText, x, y);
-    if (isPointInRectangle(mouseX, mouseY, x + pg.textWidth(prefixText), y, pg.textWidth(linkText), 45)) {
-        pg.fill(grayscaleWhite);
+    if (isOverLink) {
         cursor('pointer');
         pg.push();
         pg.rectMode(CENTER);
@@ -322,6 +323,7 @@ function drawTextLink(x, y, prefixText, linkText, linkUrl) {
     } else {
         cursor('arrow')
     }
+    pg.fill(isOverLink? grayscaleWhite : grayscaleInteractive);
     pg.text(linkText, x + pg.textWidth(prefixText), y);
     pg.pop();
 }
@@ -1109,7 +1111,6 @@ class Cat {
         } else if (this.isInSleepingStance()) {
             return catSleep[frame];
         }
-
         return catHeld;
     }
 
