@@ -296,7 +296,7 @@ function drawIntroCatchphrase() {
 }
 
 function drawIntroCredits() {
-    drawTextLink(width * .78, height * .80,
+    drawTextLink(width * .78, height * .795,
         'a game by ', 'Krab', 'https://www.instagram.com/krabcode/');
     drawTextLink(width * .78, height * .88,
         'with art by ', '235', 'https://www.instagram.com/ahojte235/');
@@ -879,7 +879,7 @@ class Cat {
 
     startDropAnimation() {
         this.dropAnimationStarted = frameCount;
-        this.dropAnimationPos.x = this.pos.x - this.size * .075;
+        this.dropAnimationPos.x = this.pos.x - this.size * .1;
         this.dropAnimationPos.y = this.pos.y + this.size * .1;
     }
 
@@ -962,6 +962,7 @@ class Cat {
     resetStance() {
         this.stance = 1;
         this.stanceChangedFrame = frameCount;
+        this.direction = 0;
     }
 
     updateStance() {
@@ -985,13 +986,13 @@ class Cat {
 
     move() {
         let speed = createVector();
-        if (this.direction === 0) {
+        if (this.isFacingRight()) {
             speed.x = 1;
-        } else if (this.direction === 1) {
+        } else if (this.isFacingDown()) {
             speed.y = 1;
-        } else if (this.direction === 2) {
+        } else if (this.isFacingLeft()) {
             speed.x = -1;
-        } else if (this.direction === 3) {
+        } else if (this.isFacingUp()) {
             speed.y = -1;
         }
         speed.mult(this.speedMagnitude);
@@ -1035,7 +1036,7 @@ class Cat {
 
     draw() {
         cg.push();
-        this.flipHorizontally = this.direction === 2 && !this.isHeld();
+        this.flipHorizontally = this.isFacingLeft() && !this.isHeld();
         cg.tint(this.hue, this.sat, this.br, 1);
         this.drawCatAtPos();
         this.drawCatWrapAround();
@@ -1100,9 +1101,9 @@ class Cat {
             return catHeld;
         }
         if (this.isInMovingStance()) {
-            if (this.direction === 0 || this.direction === 2) {
+            if (this.isFacingRight() || this.isFacingLeft()) {
                 return catWalkRight[frame];
-            } else if (this.direction === 1) {
+            } else if (this.isFacingDown()) {
                 return catWalkDown[frame];
             }
             return catWalkUp[frame];
@@ -1113,6 +1114,23 @@ class Cat {
         }
         return catHeld;
     }
+
+    isFacingRight() {
+        return this.direction === 0;
+    }
+
+    isFacingDown() {
+        return this.direction === 1;
+    }
+
+    isFacingLeft() {
+        return this.direction === 2;
+    }
+
+    isFacingUp() {
+        return this.direction === 3;
+    }
+
 
     flipIfNeeded() {
         if (this.flipHorizontally) {
