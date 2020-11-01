@@ -185,18 +185,7 @@ function draw() {
         drawPolaroidButton();
     }
     if (gameState === 'play') {
-        cg.clear();
-        cg.push();
-        cg.translate(-width * .5, -height * .5);
-        updateHoldState();
-        updateCatCountInsideTarget();
-        drawTarget();
-        drawTutorial();
-        sortCatsByY();
-        updateDrawFreeCats();
-        drawCursor();
-        updateDrawHeldCat();
-        cg.pop();
+        updateDrawCats();
         pg.image(cg, width * .5, height * .5, width, height);
     }
     if (gameState === 'intro' || gameState === 'win') {
@@ -211,6 +200,20 @@ function draw() {
     pg.pop();
     image(pg, 0, 0, width, height);
     pmouseIsPressed = mouseIsPressed;
+}
+
+function updateDrawCats() {
+    cg.clear();
+    cg.push();
+    cg.translate(-width * .5, -height * .5);
+    updateCatCountInsideTarget();
+    drawTarget();
+    drawTutorial();
+    sortCatsByY();
+    updateDrawFreeCats();
+    drawCursor();
+    updateDrawHeldCat();
+    cg.pop();
 }
 
 // noinspection JSUnusedGlobalSymbols
@@ -235,6 +238,7 @@ function mousePressed() {
 
 // noinspection JSUnusedGlobalSymbols
 function mouseReleased() {
+    mouseIsPressed = false;
     drop();
 }
 
@@ -340,7 +344,7 @@ function updateDrawCatCountSettings() {
     pg.textSize(30);
 
     let count = catCount;
-    if(gameState === 'win' && frameCount < winScrenStarted + newspaperAnimationDuration) {
+    if (gameState === 'win' && frameCount < winScrenStarted + newspaperAnimationDuration) {
         count = lastWinCatCount; // display win count for a brief moment to give the +1 change more impact
     }
     let catCountLabel = count + " cat" + (count > 1 ? 's' : '');
@@ -377,7 +381,7 @@ function labelByDifficulty() {
 }
 
 function drawAutomaticDifficultyIncrementAnimation() {
-    if(gameState !== 'win') {
+    if (gameState !== 'win') {
         return;
     }
     let difficultyAnimationStarted = winScrenStarted + newspaperAnimationDuration;
@@ -747,13 +751,10 @@ function restartGame() {
     gameState = 'play';
 }
 
-function updateHoldState() {
-    if (held != null && !mouseIsPressed) {
-        drop();
-    }
-}
-
 function drop() {
+    if (held != null) {
+        held.startDropAnimation();
+    }
     held = null;
     sticksLastReleasedFrame = frameCount;
 }
@@ -844,18 +845,22 @@ class Cat {
         this.tilt = 0;
         this.tiltSpeed = 0;
         this.tiltConstraint = HALF_PI;
-        this.tiltSpeedConstraint = PI*.01;
+        this.tiltSpeedConstraint = PI * .01;
         this.tiltGravityAcceleration = 0.5;
         this.tiltDragCoefficient = .9;
         this.tiltSideForceCoefficient = .02;
+        this.dropAnimationDuration = 30;
+        this.dropAnimationStarted = -this.dropAnimationDuration * 2;
+        this.dropAnimationPos = createVector();
     }
 
     updateDraw() {
         this.mouseInteract();
         this.updateTilt();
-        if(this.isHeld()) {
+        this.updateDrawDropAnimation();
+        if (this.isHeld()) {
             this.resetStance();
-        }else {
+        } else {
             this.updateStance();
             if (this.isInMovingStance()) {
                 this.updateDirection();
@@ -868,6 +873,34 @@ class Cat {
         this.drawCatExitsTargetIndicator();
         this.updateCurrentImage();
         this.draw();
+    }
+
+    startDropAnimation() {
+        this.dropAnimationStarted = frameCount;
+        this.dropAnimationPos.x = this.pos.x - this.size * .075;
+        this.dropAnimationPos.y = this.pos.y + this.size * .1;
+    }
+
+    updateDrawDropAnimation() {
+        // draw on the pg so that it's behind all of the cats that are on the cg
+        let dropAnimation = animateGrowth(this.dropAnimationStarted, this.dropAnimationDuration);
+        let alpha = 1 - dropAnimation;
+        if (alpha > 0) {
+            pg.push();
+            pg.translate(this.dropAnimationPos.x, this.dropAnimationPos.y);
+            pg.strokeWeight(2);
+            pg.stroke(grayscaleInteractiveHover);
+            let minRadius = 20;
+            let maxRadius = 50;
+            let r0 = lerp(minRadius, maxRadius, dropAnimation);
+            let r1 = lerp(minRadius, maxRadius, pow(dropAnimation, .5));
+            let rayCount = 16;
+            for (let i = 0; i < rayCount; i++) {
+                let theta = i * TAU / rayCount + QUARTER_PI;
+                pg.line(r0 * cos(theta), r0 * sin(theta), r1 * cos(theta), r1 * sin(theta));
+            }
+            pg.pop();
+        }
     }
 
     drawCatExitsTargetIndicator() {
@@ -898,12 +931,12 @@ class Cat {
     }
 
     updateTilt() {
-        if(!this.isHeld() || !this.tiltEnabled) {
+        if (!this.isHeld() || !this.tiltEnabled) {
             this.tilt = lerp(this.tilt, 0, 0.25);
             return;
         }
         let mouseSpeed = createVector(pmouseX - mouseX, pmouseY - mouseY).limit(5);
-        let tangentDir = p5.Vector.fromAngle(this.tilt+PI);
+        let tangentDir = p5.Vector.fromAngle(this.tilt + PI);
         this.tiltSpeed += tangentDir.dot(mouseSpeed) * this.tiltSideForceCoefficient;
         this.tiltSpeed -= sin(this.tilt) * this.tiltGravityAcceleration;
         this.tiltSpeed *= this.tiltDragCoefficient;
@@ -925,7 +958,7 @@ class Cat {
     }
 
     resetStance() {
-        this.stance = 0;
+        this.stance = 1;
         this.stanceChangedFrame = frameCount;
     }
 
