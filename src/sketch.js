@@ -840,6 +840,7 @@ class Cat {
         this.exitTargetAnimationStarted = -this.exitTargetAnimationDuration * 2;
         this.exitTargetAnimationPos = createVector();
         this.flipHorizontally = false;
+        this.tiltEnabled = false;
         this.tilt = 0;
         this.tiltSpeed = 0;
         this.tiltConstraint = HALF_PI;
@@ -897,7 +898,7 @@ class Cat {
     }
 
     updateTilt() {
-        if(!this.isHeld()) {
+        if(!this.isHeld() || !this.tiltEnabled) {
             this.tilt = lerp(this.tilt, 0, 0.25);
             return;
         }
