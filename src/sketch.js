@@ -605,9 +605,8 @@ function drawPolaroidButton() {
     if (polaroidLoadingJustCompleted) {
         bigRayGrowthStarted = frameCount;
     }
-    if (polaroidLoadingAnimation > polaroidLoadingAnimationIncrementPerFrame) {
-        // same silly if-statement workaround as before
-        pg.fill(grayscaleWhite);
+    if (polaroidLoadingAnimation > polaroidLoadingAnimationIncrementPerFrame) { // same silly if-statement workaround as before
+        pg.fill(gameState === 'play' ? grayscaleWhite : grayscaleInteractive);
         pg.noStroke();
         pg.arc(0, 0, polaroidRadius * 2, polaroidRadius * 2, -HALF_PI, -HALF_PI + TAU * ease(polaroidLoadingAnimation, 2));
     }
