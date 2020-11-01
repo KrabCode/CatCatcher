@@ -15,7 +15,8 @@ let grayscaleWhite = 1;
 let rectRoundedness = 100;
 
 let cats;
-let defaultCatCount = 5;
+let defaultCatCount = 7;
+// let defaultCatCount = 1;
 // let defaultCatCount = 99;
 let catCount = defaultCatCount;
 let catCountMinimum = 1;
@@ -28,7 +29,7 @@ let winningImageBackgroundCount = 3;
 let winningImageAngles;
 let winningImage;
 let newspaperAnimationDuration = 40;
-let difficultyAnimationDuration = 80;
+let difficultyAnimationDuration = 120;
 let winScrenStarted = -newspaperAnimationDuration;
 
 let tutorialPutCatsHereUnderstood = false;
@@ -54,6 +55,10 @@ let polaroidLoadingDuration = 120;
 let polaroidLoadingAnimationIncrementPerFrame = 1 / polaroidLoadingDuration;
 let polaroidLoadingAnimation = 0;
 let polaroidLoadingJustCompleted = false;
+
+let repeatingMousePressStarted;
+let repeatingMousePressWaitDuration = 20;
+let repeatingSpeed = 6;
 
 let bigRayGrowthDuration = 60;
 let bigRayGrowthStarted = -bigRayGrowthDuration * 2;
@@ -242,10 +247,6 @@ function keyPressed() {
 }
 
 function generateIntroCatchphrase() {
-    let justOne = false;
-    if (justOne) {
-        return 'pls rember\nwen you feel scare or frigten\nnever forget ttimes wen u feeled happy\nwen day is dark\nalways rember happy day';
-    }
     return introCatchphrase = random([
         'for your pleasure',
         'you can do it',
@@ -256,6 +257,7 @@ function generateIntroCatchphrase() {
         'no thoughts, head empty',
         'free range cats',
         'look at them go',
+        'how many can you catch?',
         'get your warm fuzzies here'
     ]);
 }
@@ -344,7 +346,6 @@ function updateDrawCatCountSettings() {
     let catCountLabel = count + " cat" + (count > 1 ? 's' : '');
     pg.translate(width * .2125, height * .895);
     pg.text(catCountLabel, 0, 0);
-
     pg.translate(-width * .035, 0);
     drawAutomaticDifficultyIncrementAnimation();
 
@@ -388,9 +389,9 @@ function drawAutomaticDifficultyIncrementAnimation() {
     pg.push();
     pg.noStroke();
     pg.fill(grayscaleWhite, alpha);
-    pg.textSize(60);
+    pg.textSize(200);
     pg.textAlign(CENTER, CENTER);
-    pg.text('+', 0, -height * .04 - difficultyAnimation * height * .05);
+    pg.text('+', width * .075, -height * .075 - difficultyAnimation * height * .075);
     pg.pop();
 }
 
@@ -401,9 +402,6 @@ function updateDrawBigButton(label) {
     }
 }
 
-let repeatingMousePressStarted;
-let repeatingMousePressWaitDuration = 20;
-let repeatingSpeed = 6;
 
 function updateDrawButton(x, y, w, h, labelImage, labelText, textScale, repeating) {
     let clicked = false;
@@ -822,11 +820,12 @@ class Cat {
 
     constructor() {
         this.id = this.uuid();
+        this.currentImg = null;
+        this.dirStableMinimumFrames = 60;
         this.pos = createVector(random(width), random(height));
         this.stance = 0;
         this.stanceStableMinimumFrames = 120;
         this.stanceChangedFrame = -random(this.stanceStableMinimumFrames * 6);
-        this.dirStableMinimumFrames = 60;
         this.dirChangedFrame = -random(this.dirStableMinimumFrames * 6);
         this.direction = floor(random(4));
         this.size = 62 * imageScale;
@@ -840,14 +839,22 @@ class Cat {
         this.exitTargetAnimationDuration = 30;
         this.exitTargetAnimationStarted = -this.exitTargetAnimationDuration * 2;
         this.exitTargetAnimationPos = createVector();
+        this.flipHorizontally = false;
+        this.tilt = 0;
+        this.tiltSpeed = 0;
+        this.tiltConstraint = HALF_PI;
+        this.tiltSpeedConstraint = PI*.01;
+        this.tiltGravityAcceleration = 0.5;
+        this.tiltDragCoefficient = .9;
+        this.tiltSideForceCoefficient = .02;
     }
 
     updateDraw() {
         this.mouseInteract();
-        if (this.isHeld()) {
-            this.stance = 0;
-            this.stanceChangedFrame = frameCount;
-        } else {
+        this.updateTilt();
+        if(this.isHeld()) {
+            this.resetStance();
+        }else {
             this.updateStance();
             if (this.isInMovingStance()) {
                 this.updateDirection();
@@ -858,6 +865,7 @@ class Cat {
             }
         }
         this.drawCatExitsTargetIndicator();
+        this.updateCurrentImage();
         this.draw();
     }
 
@@ -883,6 +891,25 @@ class Cat {
         }
     }
 
+    updateCurrentImage() {
+        let frame = animateOscillation(this.timeOffset);
+        this.currentImg = this.currentImage(frame);
+    }
+
+    updateTilt() {
+        if(!this.isHeld()) {
+            this.tilt = lerp(this.tilt, 0, 0.25);
+            return;
+        }
+        let mouseSpeed = createVector(pmouseX - mouseX, pmouseY - mouseY).limit(5);
+        let tangentDir = p5.Vector.fromAngle(this.tilt+PI);
+        this.tiltSpeed += tangentDir.dot(mouseSpeed) * this.tiltSideForceCoefficient;
+        this.tiltSpeed -= sin(this.tilt) * this.tiltGravityAcceleration;
+        this.tiltSpeed *= this.tiltDragCoefficient;
+        this.tiltSpeed = constrain(this.tiltSpeed, -this.tiltSpeedConstraint, this.tiltSpeedConstraint);
+        this.tilt += this.tiltSpeed;
+        this.tilt = constrain(this.tilt, -this.tiltConstraint, this.tiltConstraint);
+    }
 
     isInMovingStance() {
         return this.stance === 0;
@@ -894,6 +921,11 @@ class Cat {
 
     isInSleepingStance() {
         return this.stance === 2;
+    }
+
+    resetStance() {
+        this.stance = 0;
+        this.stanceChangedFrame = frameCount;
     }
 
     updateStance() {
@@ -942,7 +974,6 @@ class Cat {
         }
     }
 
-
     updateDirection() {
         let framesSinceDirLastChanged = frameCount - this.dirChangedFrame;
         if (framesSinceDirLastChanged < this.dirStableMinimumFrames) {
@@ -966,27 +997,35 @@ class Cat {
         this.direction %= 4;
     }
 
-
     draw() {
         cg.push();
-        let frame = animateOscillation(this.timeOffset);
-        let flipHorizontally = this.direction === 2 && !this.isHeld();
-        let img = this.currentImage(frame);
+        this.flipHorizontally = this.direction === 2 && !this.isHeld();
         cg.tint(this.hue, this.sat, this.br, 1);
-        this.drawCatAtPos(img, flipHorizontally);
-        this.drawCatWrapAround(img, flipHorizontally);
+        this.drawCatAtPos();
+        this.drawCatWrapAround();
         cg.pop();
     }
 
-    drawCatAtPos(img, flipHorizontally) {
+
+    drawCatAtPos() {
         cg.push();
         cg.translate(this.pos.x, this.pos.y);
-        this.flipIfNeeded(flipHorizontally);
-        cg.image(img, 0, 0);
+        this.flipIfNeeded();
+        cg.rotate(this.tilt);
+        cg.image(this.currentImg, 0, 0);
         cg.pop();
     }
 
-    drawCatWrapAround(img, flipHorizontally) {
+    drawCatAt(x, y) {
+        cg.push();
+        cg.translate(x, y);
+        this.flipIfNeeded();
+        cg.rotate(this.tilt);
+        cg.image(this.currentImg, 0, 0);
+        cg.pop();
+    }
+
+    drawCatWrapAround() {
         cg.push();
         cg.translate(this.pos.x, this.pos.y);
         let leftBorder = this.pos.x < this.size / 2;
@@ -994,37 +1033,29 @@ class Cat {
         let topBorder = this.pos.y < this.size / 2;
         let bottomBorder = this.pos.y > height - this.size / 2;
         if (leftBorder) {
-            this.drawCatWithOffset(img, flipHorizontally, width, 0);
+            this.drawCatAt(width, 0);
             if (topBorder) {
-                this.drawCatWithOffset(img, flipHorizontally, width, height);
+                this.drawCatAt(width, height);
             }
             if (bottomBorder) {
-                this.drawCatWithOffset(img, flipHorizontally, width, -height);
+                this.drawCatAt(width, -height);
             }
         }
         if (rightBorder) {
-            this.drawCatWithOffset(img, flipHorizontally, -width, 0);
+            this.drawCatAt(-width, 0);
             if (topBorder) {
-                this.drawCatWithOffset(img, flipHorizontally, -width, height);
+                this.drawCatAt(-width, height);
             }
             if (bottomBorder) {
-                this.drawCatWithOffset(img, flipHorizontally, -width, -height);
+                this.drawCatAt(-width, -height);
             }
         }
         if (topBorder) {
-            this.drawCatWithOffset(img, flipHorizontally, 0, height);
+            this.drawCatAt(0, height);
         }
         if (bottomBorder) {
-            this.drawCatWithOffset(img, flipHorizontally, 0, -height);
+            this.drawCatAt(0, -height);
         }
-        cg.pop();
-    }
-
-    drawCatWithOffset(img, flipHorizontally, x, y) {
-        cg.push();
-        cg.translate(x, y);
-        this.flipIfNeeded(flipHorizontally);
-        cg.image(img, 0, 0);
         cg.pop();
     }
 
@@ -1048,8 +1079,8 @@ class Cat {
         return catHeld;
     }
 
-    flipIfNeeded(flipX) {
-        if (flipX) {
+    flipIfNeeded() {
+        if (this.flipHorizontally) {
             cg.scale(-1, 1);
         } else {
             cg.scale(1, 1);
