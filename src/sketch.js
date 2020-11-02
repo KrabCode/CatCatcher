@@ -214,7 +214,6 @@ function draw() {
 }
 
 function updateDrawZenToggle() {
-    // checkbox, zen label, tooltip explanation
     let w = width * .05;
     let x = width * .075;
     let y = x;
@@ -392,7 +391,6 @@ function updateDrawCatCountSettings() {
     pg.noStroke();
     pg.fill(grayscaleWhite);
     pg.textAlign(RIGHT, CENTER);
-    pg.textStyle();
     pg.textSize(30);
 
     let count = catCount;
@@ -739,22 +737,22 @@ function drawCursor() {
         return;
     }
     noCursor();
-    pg.push();
+    cg.push();
     let w = sticksHeld.width * imageScale;
     let h = sticksHeld.height * imageScale;
     let x = mouseX + w * 0.37;
     let y = mouseY + h * -0.37;
     if (held != null) {
-        pg.image(sticksHeld, x, y, w, h);
+        cg.image(sticksHeld, x, y, w, h);
     } else {
         if (fadeSticks) {
             let sticksFadeout = constrain(norm(frameCount - sticksFadeoutDelay, sticksLastReleasedFrame,
                 sticksLastReleasedFrame + sticksFadeoutDelay), 0, 1);
-            pg.tint(1, 1 - sticksFadeout);
+            cg.tint(1, 1 - sticksFadeout);
         }
-        pg.image(sticksIdle, x, y, w, h);
+        cg.image(sticksIdle, x, y, w, h);
     }
-    pg.pop();
+    cg.pop();
 }
 
 function winGame() {
