@@ -1,4 +1,4 @@
-// p5.disableFriendlyErrors = true; // compute fester
+ p5.disableFriendlyErrors = true; // compute fester
 
 let mainCanvas;
 let pg;
@@ -103,6 +103,10 @@ let fontComicSans;
 
 // noinspection JSUnusedGlobalSymbols
 function preload() {
+
+}
+
+function loadAssets() {
     polaroidBlep = loadAsset("polaroid-blep.png");
     polaroidIdle = loadAsset("polaroid-idle.png");
     sticksHeld = loadAsset("chopsticks-hold.png");
@@ -121,8 +125,6 @@ function preload() {
     labelTutorialPutCatsHere = loadAsset("tutorial-putcatshere.png");
     labelTutorialBeQuick = loadAsset("tutorial-bequick.png");
     fontComicSans = loadFont('assets\\comic_sans.ttf');
-    // soundFormats('mp3');
-    // meowSound = loadSound('assets/sounds/meow.mp3');
 }
 
 function loadAsset(localPath, successCallback) {
@@ -135,22 +137,24 @@ function loadAsset(localPath, successCallback) {
 // noinspection JSUnusedGlobalSymbols
 function setup() {
     mainCanvas = createCanvas(1366, 768);
-    frameRate(60);
+    loadAssets();
     noSmooth();
+    frameRate(60);
     colorMode(HSB, 1, 1, 1, 1);
     imageMode(CORNER);
     introCatchphrase = generateIntroCatchphrase();
-    pg = createGraphics(width, height);
-    cg = createGraphics(width, height, WEBGL);
+    cg = createGraphics(width, height, P2D);
     cg.colorMode(HSB, 1, 1, 1, 1);
+    cg.noSmooth();
     cg.imageMode(CENTER);
+    pg = createGraphics(width, height);
     pg.strokeCap(ROUND);
     pg.colorMode(HSB, 1, 1, 1, 1);
+    pg.textFont(fontComicSans);
     pg.background(0);
     pg.imageMode(CENTER);
     pg.rectMode(CENTER);
     pg.noSmooth();
-    pg.textFont(fontComicSans);
     polaroidPos = createVector(width - 300, height * .5);
     targetRectPos = createVector(width * .3, height * .5);
     targetRectSize = createVector(1366 * .4, 768 * .4);
@@ -179,6 +183,7 @@ function draw() {
     if (gameState === 'intro') {
         // updateDrawIntroShader();
         drawIntro();
+       // updateDrawZenToggle();
         updateDrawBigButton(labelPlayButton);
     }
     if (gameState === 'play' || gameState === 'win') {
@@ -197,10 +202,18 @@ function draw() {
         updateDrawBigButton(labelAgainButton);
         drawWinMessage();
     }
-    // displayFPS();
+    displayFPS();
     pg.pop();
     image(pg, 0, 0, width, height);
     pmouseIsPressed = mouseIsPressed;
+}
+
+function updateDrawZenToggle() {
+    // checkbox, zen label, tooltip explanation
+    let size = width * .05;
+    pg.push();
+    pg.rect(size, size, size, size);
+    pg.pop();
 }
 
 function updateDrawCats() {
@@ -817,6 +830,14 @@ function animateOscillation(offset) {
     return floor(frameCount / 22.5 + offset) % 2;
 }
 
+function random(a, b)
+{
+    if(b == null) {
+        return Math.random() * a;
+    }
+    return min + Math.random() * (max - min);
+}
+
 // noinspection SpellCheckingInspection
 class Cat {
 
@@ -836,7 +857,7 @@ class Cat {
         this.sat = random(.15, .4);
         this.br = random(.8, 1);
         this.timeOffset = random(10);
-        this.speedMagnitude = random(.25, .75);
+        this.speedMagnitude = random(.5, 1.5);
         this.pInsideTarget = false;
         this.exitTargetAnimationDuration = 30;
         this.exitTargetAnimationStarted = -this.exitTargetAnimationDuration * 2;
