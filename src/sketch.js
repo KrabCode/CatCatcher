@@ -105,7 +105,7 @@ let fontComicSans;
 
 // noinspection JSUnusedGlobalSymbols
 function preload() {
-
+    loadAssets();
 }
 
 function loadAssets() {
@@ -139,7 +139,6 @@ function loadAsset(localPath, successCallback) {
 // noinspection JSUnusedGlobalSymbols
 function setup() {
     mainCanvas = createCanvas(1366, 768);
-    loadAssets();
     noSmooth();
     frameRate(60);
     colorMode(HSB, 1, 1, 1, 1);
@@ -961,6 +960,9 @@ class Cat {
     }
 
     drawCatExitsTargetIndicator() {
+        if(zenMode) {
+            return;
+        }
         let insideTarget = isInsideTarget(this.pos.x, this.pos.y);
         if (!insideTarget && this.pInsideTarget) {
             this.exitTargetAnimationStarted = frameCount;
