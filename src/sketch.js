@@ -143,7 +143,7 @@ function setup() {
     colorMode(HSB, 1, 1, 1, 1);
     imageMode(CORNER);
     introCatchphrase = generateIntroCatchphrase();
-    cg = createGraphics(width, height, P2D);
+    cg = createGraphics(width, height, WEBGL);
     cg.colorMode(HSB, 1, 1, 1, 1);
     cg.noSmooth();
     cg.imageMode(CENTER);
