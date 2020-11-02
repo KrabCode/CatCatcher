@@ -9,6 +9,7 @@ let mouseIsInsidePolaroid = false;
 let useImageCursor;
 
 let grayscaleBackground = 0.15;
+let grayscaleTarget = 0.225;
 let grayscaleInteractive = 0.35;
 let grayscaleInteractiveHover = 0.5;
 let grayscaleBright = 0.75;
@@ -42,6 +43,7 @@ let imageScale = 1;
 let held = null;
 let fadeSticks = false;
 let gameState = 'intro'; // known states: intro, play, win
+let zenMode = false;
 let introCatchphrase;
 
 let sticksFadeoutDelay = 60;
@@ -181,16 +183,19 @@ function draw() {
     updateCursor();
     updateTutorial();
     if (gameState === 'intro') {
-        // updateDrawIntroShader();
         drawIntro();
-       // updateDrawZenToggle();
+        updateDrawZenToggle();
         updateDrawBigButton(labelPlayButton);
     }
-    if (gameState === 'play' || gameState === 'win') {
+    if ((gameState === 'play' || gameState === 'win') && !zenMode) {
         updatePolaroidButton();
         drawPolaroidButton();
     }
     if (gameState === 'play') {
+        if(!zenMode) {
+            drawTarget();
+            drawTutorial();
+        }
         updateDrawCats();
         pg.image(cg, width * .5, height * .5, width, height);
     }
@@ -202,7 +207,7 @@ function draw() {
         updateDrawBigButton(labelAgainButton);
         drawWinMessage();
     }
-    displayFPS();
+    // displayFPS();
     pg.pop();
     image(pg, 0, 0, width, height);
     pmouseIsPressed = mouseIsPressed;
@@ -210,9 +215,42 @@ function draw() {
 
 function updateDrawZenToggle() {
     // checkbox, zen label, tooltip explanation
-    let size = width * .05;
+    let w = width * .05;
+    let x = width * .075;
+    let y = x;
     pg.push();
-    pg.rect(size, size, size, size);
+    pg.stroke(grayscaleInteractive);
+    pg.strokeWeight(4);
+    pg.noFill();
+    if(isPointInRectangle(mouseX, mouseY, x-w*.5, y-w*.5, w, w)) {
+        pg.fill(grayscaleInteractiveHover);
+        if(mouseIsPressed && !pmouseIsPressed) {
+            zenMode = !zenMode;
+        }
+    }
+    if(zenMode) {
+        pg.push();
+        pg.stroke(grayscaleBright);
+        pg.strokeWeight(3);
+        pg.noFill();
+        pg.translate(x,y);
+        pg.rotate(radians(frameCount));
+        for(let r = w; r >= 0; r-=25) {
+            pg.arc(0, 0, r, r, 0, TAU-TAU*.15);
+
+        }
+        pg.pop();
+    }else {
+        pg.circle(x, y, w);
+    }
+
+    pg.noStroke();
+    pg.fill(grayscaleInteractive);
+    pg.textSize(35);
+    pg.textAlign(CENTER, CENTER);
+    pg.translate(x+w*2.0, y-w*.125);
+    pg.rotate();
+    pg.text('zen mode', 0, 0);
     pg.pop();
 }
 
@@ -221,8 +259,7 @@ function updateDrawCats() {
     cg.push();
     cg.translate(-width * .5, -height * .5);
     updateCatCountInsideTarget();
-    drawTarget();
-    drawTutorial();
+
     sortCatsByY();
     updateDrawFreeCats();
     drawCursor();
@@ -574,7 +611,7 @@ function drawTarget() {
     pg.push();
     pg.translate(targetRectPos.x, targetRectPos.y);
     pg.noStroke();
-    pg.fill(grayscaleInteractive);
+    pg.fill(grayscaleTarget);
     pg.rect(0, 0, targetRectSize.x, targetRectSize.y);
     pg.pop();
 }
@@ -857,7 +894,7 @@ class Cat {
         this.sat = random(.15, .4);
         this.br = random(.8, 1);
         this.timeOffset = random(10);
-        this.speedMagnitude = random(.5, 1.5);
+        this.speedMagnitude = random(.25, 0.75);
         this.pInsideTarget = false;
         this.exitTargetAnimationDuration = 30;
         this.exitTargetAnimationStarted = -this.exitTargetAnimationDuration * 2;
