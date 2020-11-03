@@ -389,8 +389,9 @@ function updateDrawZenToggle() {
 function updateDrawCatCountSettings() {
     let y = height * .9;
     let x = width * 0.15;
-    let catCountSub = updateDrawButton(x - width * .075, y, 70, 40, null, '-', 40, true);
-    let catCountAdd = updateDrawButton(x + width * .075, y, 70, 40, null, '+', 40, true);
+    let buttonDistance =  width * .075;
+    let catCountSub = updateDrawButton(x - buttonDistance, y, 70, 40, null, '-', 40, true);
+    let catCountAdd = updateDrawButton(x + buttonDistance, y, 70, 40, null, '+', 40, true);
     if (catCountSub) {
         catCount--;
     }
@@ -401,7 +402,7 @@ function updateDrawCatCountSettings() {
     pg.push();
     pg.noStroke();
     pg.fill(grayscaleWhite);
-    pg.textAlign(RIGHT, CENTER);
+    pg.textAlign(CENTER, CENTER);
     pg.textSize(30);
 
     let count = catCount;
@@ -409,10 +410,9 @@ function updateDrawCatCountSettings() {
         count = lastWinCatCount; // display win count for a brief moment to give the +1 change more impact
     }
     let catCountLabel = count + " cat" + (count > 1 ? 's' : '');
-    pg.translate(x + width * 0.0325, y - height*0.01);
+    pg.translate(x, y - height*0.01);
     pg.text(catCountLabel, 0, 0);
-    pg.translate(-width * .035, 0);
-    drawAutomaticDifficultyIncrementAnimation();
+    drawAutomaticDifficultyIncrementAnimation(buttonDistance);
     pg.pop();
     pg.push();
     pg.translate(width * .5, height * .85);
@@ -421,6 +421,25 @@ function updateDrawCatCountSettings() {
     pg.textAlign(CENTER, CENTER);
     pg.textSize(30);
     pg.text(difficultyIndicator, 0, -height * .1);
+    pg.pop();
+}
+
+function drawAutomaticDifficultyIncrementAnimation(buttonDistance) {
+    if (gameState !== 'win') {
+        return;
+    }
+    let difficultyAnimationStarted = winScrenStarted + newspaperAnimationDuration;
+    let difficultyAnimation = animate(difficultyAnimationStarted, difficultyAnimationDuration);
+    if (difficultyAnimation <= 0) {
+        return;
+    }
+    let alpha = 1 - difficultyAnimation;
+    pg.push();
+    pg.noStroke();
+    pg.fill(grayscaleWhite, alpha);
+    pg.textSize(200);
+    pg.textAlign(CENTER, CENTER);
+    pg.text('+', buttonDistance, -height * .075 - difficultyAnimation * height * .075);
     pg.pop();
 }
 
@@ -445,25 +464,6 @@ function labelByDifficulty() {
     } else {
         return 'impossible';
     }
-}
-
-function drawAutomaticDifficultyIncrementAnimation() {
-    if (gameState !== 'win') {
-        return;
-    }
-    let difficultyAnimationStarted = winScrenStarted + newspaperAnimationDuration;
-    let difficultyAnimation = animate(difficultyAnimationStarted, difficultyAnimationDuration);
-    if (difficultyAnimation <= 0) {
-        return;
-    }
-    let alpha = 1 - difficultyAnimation;
-    pg.push();
-    pg.noStroke();
-    pg.fill(grayscaleWhite, alpha);
-    pg.textSize(200);
-    pg.textAlign(CENTER, CENTER);
-    pg.text('+', width * .075, -height * .075 - difficultyAnimation * height * .075);
-    pg.pop();
 }
 
 function updateDrawBigButton(label) {
