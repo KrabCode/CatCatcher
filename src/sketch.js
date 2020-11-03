@@ -1,4 +1,4 @@
- p5.disableFriendlyErrors = true; // compute fester
+p5.disableFriendlyErrors = true; // compute fester
 
 let mainCanvas;
 let pg;
@@ -156,7 +156,7 @@ function setup() {
     pg.imageMode(CENTER);
     pg.rectMode(CENTER);
     pg.noSmooth();
-    polaroidPos = createVector(width - 300, height * .5);
+    polaroidPos = createVector(width - 200, height * .5);
     targetRectPos = createVector(width * .3, height * .5);
     targetRectSize = createVector(1366 * .4, 768 * .4);
 }
@@ -178,20 +178,19 @@ function draw() {
     mainCanvas.position((windowWidth - width) / 2, (windowHeight - height) / 2);
     pg.background(grayscaleBackground);
     pg.push();
-
     updateCursor();
     updateTutorial();
     if (gameState === 'intro') {
         drawIntro();
-        updateDrawZenToggle();
+
         updateDrawBigButton(labelPlayButton);
     }
-    if ((gameState === 'play' || gameState === 'win') && !zenMode) {
+    if ((gameState === 'play' || gameState === 'win') && (!zenMode || gameState === 'win')) {
         updatePolaroidButton();
         drawPolaroidButton();
     }
     if (gameState === 'play') {
-        if(!zenMode) {
+        if (!zenMode) {
             drawTarget();
             drawTutorial();
         }
@@ -199,6 +198,7 @@ function draw() {
         pg.image(cg, width * .5, height * .5, width, height);
     }
     if (gameState === 'intro' || gameState === 'win') {
+        updateDrawZenToggle();
         updateDrawCatCountSettings();
     }
     if (gameState === 'win') {
@@ -210,46 +210,6 @@ function draw() {
     pg.pop();
     image(pg, 0, 0, width, height);
     pmouseIsPressed = mouseIsPressed;
-}
-
-function updateDrawZenToggle() {
-    let w = width * .05;
-    let x = width * .075;
-    let y = x;
-    pg.push();
-    pg.stroke(grayscaleInteractive);
-    pg.strokeWeight(4);
-    pg.noFill();
-    if(isPointInRectangle(mouseX, mouseY, x-w*.5, y-w*.5, w, w)) {
-        pg.fill(grayscaleInteractiveHover);
-        if(mouseIsPressed && !pmouseIsPressed) {
-            zenMode = !zenMode;
-        }
-    }
-    if(zenMode) {
-        pg.push();
-        pg.stroke(grayscaleBright);
-        pg.strokeWeight(3);
-        pg.noFill();
-        pg.translate(x,y);
-        pg.rotate(radians(frameCount));
-        for(let r = w; r >= 0; r-=25) {
-            pg.arc(0, 0, r, r, 0, TAU-TAU*.15);
-
-        }
-        pg.pop();
-    }else {
-        pg.circle(x, y, w);
-    }
-
-    pg.noStroke();
-    pg.fill(grayscaleInteractive);
-    pg.textSize(35);
-    pg.textAlign(CENTER, CENTER);
-    pg.translate(x+w*2.0, y-w*.125);
-    pg.rotate();
-    pg.text('zen mode', 0, 0);
-    pg.pop();
 }
 
 function updateDrawCats() {
@@ -354,8 +314,8 @@ function drawTextLink(x, y, prefixText, linkText, linkUrl) {
     pg.push();
     pg.textAlign(LEFT, TOP);
     pg.textSize(35);
-    let isOverLink = isPointInRectangle(mouseX, mouseY, x, y,  pg.textWidth(prefixText) + pg.textWidth(linkText), 45);
-    pg.fill(isOverLink? grayscaleBright : grayscaleInteractive);
+    let isOverLink = isPointInRectangle(mouseX, mouseY, x, y, pg.textWidth(prefixText) + pg.textWidth(linkText), 45);
+    pg.fill(isOverLink ? grayscaleBright : grayscaleInteractive);
     pg.text(prefixText, x, y);
     if (isOverLink) {
         cursor('pointer');
@@ -369,16 +329,68 @@ function drawTextLink(x, y, prefixText, linkText, linkUrl) {
             open(linkUrl);
         }
     } else {
-        cursor('arrow')
+        cursor('arrow');
     }
-    pg.fill(isOverLink? grayscaleWhite : grayscaleInteractive);
+    pg.fill(isOverLink ? grayscaleWhite : grayscaleInteractive);
     pg.text(linkText, x + pg.textWidth(prefixText), y);
     pg.pop();
 }
 
+
+function updateDrawZenToggle() {
+    let w = width * .05;
+    let x = width * .075;
+    let y = height * .75;
+    pg.push();
+    pg.strokeWeight(4);
+    pg.noFill();
+    let isMouseOver = isPointInRectangle(mouseX, mouseY, x - w * .5, y - w * .5, w, w)
+    if (isMouseOver) {
+        if (mouseIsPressed && !pmouseIsPressed) {
+            zenMode = !zenMode;
+        }
+    }
+    if (zenMode) {
+        pg.push();
+        pg.stroke(grayscaleBright);
+        pg.strokeWeight(3);
+        pg.noFill();
+        pg.translate(x, y);
+        pg.rotate(radians(frameCount));
+
+        for (let r = w; r >= 0; r -= 25) {
+            pg.beginShape(TRIANGLE_STRIP);
+            let detail = 50;
+            for (let v = 0; v <= detail; v++) {
+                let vNorm = norm(v, 0, detail);
+                let theta = vNorm * TAU*.9;
+                pg.stroke(lerp(grayscaleBackground, isMouseOver ? grayscaleBright : grayscaleInteractiveHover, vNorm));
+                pg.vertex(.5 * r * cos(theta),   .5 * r * sin(theta));
+                pg.vertex(.475 * r * cos(theta), .475 * r * sin(theta));
+            }
+            pg.endShape();
+        }
+        pg.pop();
+    } else {
+        pg.stroke(isMouseOver ? grayscaleWhite : grayscaleInteractive);
+        pg.fill(isMouseOver ? grayscaleInteractiveHover : grayscaleBackground);
+        pg.circle(x, y, w);
+    }
+    pg.noStroke();
+    pg.fill(grayscaleInteractive);
+    pg.textSize(35);
+    pg.textAlign(CENTER, CENTER);
+    pg.translate(x + w * 2.0, y - w * .125);
+    pg.rotate();
+    pg.text('zen mode', 0, 0);
+    pg.pop();
+}
+
 function updateDrawCatCountSettings() {
-    let catCountSub = updateDrawButton(width * .1, height * .9, 70, 40, null, '-', 40, true);
-    let catCountAdd = updateDrawButton(width * .25, height * .9, 70, 40, null, '+', 40, true);
+    let y = height * .9;
+    let x = width * 0.15;
+    let catCountSub = updateDrawButton(x - width * .075, y, 70, 40, null, '-', 40, true);
+    let catCountAdd = updateDrawButton(x + width * .075, y, 70, 40, null, '+', 40, true);
     if (catCountSub) {
         catCount--;
     }
@@ -397,19 +409,25 @@ function updateDrawCatCountSettings() {
         count = lastWinCatCount; // display win count for a brief moment to give the +1 change more impact
     }
     let catCountLabel = count + " cat" + (count > 1 ? 's' : '');
-    pg.translate(width * .2125, height * .895);
+    pg.translate(x + width * 0.0325, y - height*0.01);
     pg.text(catCountLabel, 0, 0);
     pg.translate(-width * .035, 0);
     drawAutomaticDifficultyIncrementAnimation();
-
+    pg.pop();
+    pg.push();
+    pg.translate(width * .5, height * .85);
     let difficultyIndicator = labelByDifficulty();
     pg.fill(grayscaleInteractiveHover);
     pg.textAlign(CENTER, CENTER);
+    pg.textSize(30);
     pg.text(difficultyIndicator, 0, -height * .1);
     pg.pop();
 }
 
 function labelByDifficulty() {
+    if(zenMode) {
+        return 'no rules';
+    }
     if (catCount < 5) {
         return 'very easy';
     } else if (catCount < 15) {
@@ -516,7 +534,7 @@ function drawWinMessage() {
 
 function drawWinningImage() {
     pg.push();
-    pg.translate(targetRectPos.x, targetRectPos.y);
+    pg.translate(width * .5, height * .5);
     let newspaperAnimation = animate(winScrenStarted, newspaperAnimationDuration);
     pg.imageMode(CENTER);
     pg.rectMode(CENTER);
@@ -559,7 +577,7 @@ function drawTutorial() {
 }
 
 function updateTutorial() {
-    if (catCountInsideTargetJustFilled) {
+    if (catCountInsideTargetJustFilled && !zenMode) {
         tutorialPutCatsHereUnderstood = true;
     }
     if (gameState === 'win') {
@@ -864,9 +882,8 @@ function animateOscillation(offset) {
     return floor(frameCount / 22.5 + offset) % 2;
 }
 
-function random(a, b)
-{
-    if(b == null) {
+function random(a, b) {
+    if (b == null) {
         return Math.random() * a;
     }
     return min + Math.random() * (max - min);
@@ -960,7 +977,7 @@ class Cat {
     }
 
     drawCatExitsTargetIndicator() {
-        if(zenMode) {
+        if (zenMode) {
             return;
         }
         let insideTarget = isInsideTarget(this.pos.x, this.pos.y);
