@@ -1,4 +1,4 @@
-p5.disableFriendlyErrors = true; // compute fester
+p5.disableFriendlyErrors = true; // compute faster pls
 
 let mainCanvas;
 let pg;
@@ -45,6 +45,7 @@ let fadeSticks = false;
 let gameState = 'intro'; // known states: intro, play, win
 let zenMode = false;
 let introCatchphrase;
+let mouseVector;
 
 let sticksFadeoutDelay = 60;
 let sticksFadeoutDuration = 60;
@@ -103,6 +104,13 @@ let labelTutorialBeQuick;
 
 let fontComicSans;
 
+let mutedSounds = false;
+// let mutedMusic = true;
+let music;
+
+let soundPolaroidWin;
+let soundClick;
+
 // noinspection JSUnusedGlobalSymbols
 function preload() {
     loadAssets();
@@ -127,6 +135,12 @@ function loadAssets() {
     labelTutorialPutCatsHere = loadAsset("tutorial-putcatshere.png");
     labelTutorialBeQuick = loadAsset("tutorial-bequick.png");
     fontComicSans = loadFont('assets\\comic_sans.ttf');
+
+    soundFormats('mp3', 'ogg', 'wav');
+   // music = loadSound('assets\\sounds\\Contemplation.mp3');
+    soundClick = loadSound('assets\\sounds\\mouseclick.wav');
+    soundClick.setVolume(0.5);
+    soundPolaroidWin = loadSound('assets\\sounds\\photo.ogg');
 }
 
 function loadAsset(localPath, successCallback) {
@@ -138,7 +152,11 @@ function loadAsset(localPath, successCallback) {
 
 // noinspection JSUnusedGlobalSymbols
 function setup() {
-    mainCanvas = createCanvas(1366, 768);
+    let idealWidth = 1366;
+    let idealHeight = 768;
+    let scale = min(clamp(norm(windowWidth, 0, idealWidth), 0, 1), clamp(norm(windowHeight, 0, idealHeight), 0, 1));
+    scale = max(scale, .75);
+    mainCanvas = createCanvas(idealWidth * scale, idealHeight * scale);
     noSmooth();
     frameRate(60);
     colorMode(HSB, 1, 1, 1, 1);
@@ -156,9 +174,10 @@ function setup() {
     pg.imageMode(CENTER);
     pg.rectMode(CENTER);
     pg.noSmooth();
+    mouseVector = createVector();
     polaroidPos = createVector(width - 200, height * .5);
     targetRectPos = createVector(width * .3, height * .5);
-    targetRectSize = createVector(1366 * .4, 768 * .4);
+    targetRectSize = createVector(width * .4, height * .4);
 }
 
 function sortCatsByY() {
@@ -173,19 +192,41 @@ function sortCatsByY() {
     });
 }
 
+function updateDrawMuteButton() {
+    if (updateDrawButton(width * .11, height * .58, 160, 60, null, mutedSounds ? 'unmute' : 'mute', 36)) {
+        mutedSounds = !mutedSounds;
+        /*
+        mutedMusic = !mutedMusic;
+        if (mutedMusic) {
+            music.stop();
+        } else {
+            music.loop();
+        }*/
+    }
+
+}
+
+function playSound(sound) {
+    if (mutedSounds) {
+        return;
+    }
+    sound.play();
+}
+
 // noinspection JSUnusedGlobalSymbols
 function draw() {
     mainCanvas.position((windowWidth - width) / 2, (windowHeight - height) / 2);
+    mouseVector.x = mouseX;
+    mouseVector.y = mouseY;
     pg.background(grayscaleBackground);
     pg.push();
     updateCursor();
     updateTutorial();
     if (gameState === 'intro') {
         drawIntro();
-
         updateDrawBigButton(labelPlayButton);
     }
-    if ((gameState === 'play' || gameState === 'win') && (!zenMode || gameState === 'win')) {
+    if ((gameState === 'play' && !zenMode) || gameState === 'win') {
         updatePolaroidButton();
         drawPolaroidButton();
     }
@@ -198,6 +239,7 @@ function draw() {
         pg.image(cg, width * .5, height * .5, width, height);
     }
     if (gameState === 'intro' || gameState === 'win') {
+        updateDrawMuteButton();
         updateDrawZenToggle();
         updateDrawCatCountSettings();
     }
@@ -238,7 +280,7 @@ function displayFPS() {
 
 // noinspection JSUnusedGlobalSymbols
 function mousePressed() {
-    if (gameState === 'play' && polaroidLoadingAnimation >= 1 && mouseIsInsidePolaroid) {
+    if (!zenMode && gameState === 'play' && polaroidLoadingAnimation >= 1 && mouseIsInsidePolaroid) {
         winGame();
     }
     pmouseIsPressed = false;
@@ -253,9 +295,11 @@ function mouseReleased() {
 
 // noinspection JSUnusedGlobalSymbols
 function keyPressed() {
-    if (gameState === 'play' && keyCode === ESCAPE) {
-        generateIntroCatchphrase();
-        gameState = 'intro';
+    if (keyCode === ESCAPE) {
+        if (gameState === 'play' || gameState === 'win') {
+            generateIntroCatchphrase();
+            gameState = 'intro';
+        }
     }
 }
 
@@ -304,9 +348,9 @@ function drawIntroCatchphrase() {
 }
 
 function drawIntroCredits() {
-    drawTextLink(width * .78, height * .795,
+    drawTextLink(width * .75, height * .795,
         'a game by ', 'Krab', 'https://www.instagram.com/krabcode/');
-    drawTextLink(width * .78, height * .88,
+    drawTextLink(width * .75, height * .88,
         'with art by ', '235', 'https://www.instagram.com/ahojte235/');
 }
 
@@ -363,9 +407,9 @@ function updateDrawZenToggle() {
             let detail = 50;
             for (let v = 0; v <= detail; v++) {
                 let vNorm = norm(v, 0, detail);
-                let theta = vNorm * TAU*.9;
+                let theta = vNorm * TAU * .9;
                 pg.stroke(lerp(grayscaleBackground, isMouseOver ? grayscaleBright : grayscaleInteractiveHover, vNorm));
-                pg.vertex(.5 * r * cos(theta),   .5 * r * sin(theta));
+                pg.vertex(.5 * r * cos(theta), .5 * r * sin(theta));
                 pg.vertex(.475 * r * cos(theta), .475 * r * sin(theta));
             }
             pg.endShape();
@@ -389,7 +433,7 @@ function updateDrawZenToggle() {
 function updateDrawCatCountSettings() {
     let y = height * .9;
     let x = width * 0.15;
-    let buttonDistance =  width * .075;
+    let buttonDistance = width * .075;
     let catCountSub = updateDrawButton(x - buttonDistance, y, 70, 40, null, '-', 40, true);
     let catCountAdd = updateDrawButton(x + buttonDistance, y, 70, 40, null, '+', 40, true);
     if (catCountSub) {
@@ -410,7 +454,7 @@ function updateDrawCatCountSettings() {
         count = lastWinCatCount; // display win count for a brief moment to give the +1 change more impact
     }
     let catCountLabel = count + " cat" + (count > 1 ? 's' : '');
-    pg.translate(x, y - height*0.01);
+    pg.translate(x, y - height * 0.01);
     pg.text(catCountLabel, 0, 0);
     drawAutomaticDifficultyIncrementAnimation(buttonDistance);
     pg.pop();
@@ -444,7 +488,7 @@ function drawAutomaticDifficultyIncrementAnimation(buttonDistance) {
 }
 
 function labelByDifficulty() {
-    if(zenMode) {
+    if (zenMode) {
         return 'no rules';
     }
     if (catCount < 5) {
@@ -619,7 +663,7 @@ function isInsideTarget(x, y) {
 }
 
 function areAllCatsInsideTarget() {
-    return catCountInsideTarget === catCount;
+    return catCountInsideTarget === catCount && gameState === 'play';
 }
 
 function drawTarget() {
@@ -631,8 +675,20 @@ function drawTarget() {
     pg.pop();
 }
 
+let pLoadingConditionsMet = false;
+let pCatsInsideTarget = false;
+
 function updatePolaroidButton() {
-    let loadingConditionsMet = areAllCatsInsideTarget() && mouseIsInsidePolaroid;
+    let allCatsInsideTarget = areAllCatsInsideTarget();
+    let loadingConditionsMet = allCatsInsideTarget && mouseIsInsidePolaroid;
+    if(!pLoadingConditionsMet && loadingConditionsMet) {
+        playSound(soundClick);
+    }
+    if(!pCatsInsideTarget && allCatsInsideTarget) {
+        playSound(soundClick);
+    }
+    pLoadingConditionsMet = loadingConditionsMet;
+    pCatsInsideTarget = allCatsInsideTarget;
     let polaroidLoadingAnimationLastFrame = polaroidLoadingAnimation;
     if (loadingConditionsMet) {
         polaroidLoadingAnimation += polaroidLoadingAnimationIncrementPerFrame;
@@ -644,6 +700,9 @@ function updatePolaroidButton() {
     }
     polaroidLoadingAnimation = clamp(polaroidLoadingAnimation, 0, 1);
     polaroidLoadingJustCompleted = polaroidLoadingAnimationLastFrame < 1 && polaroidLoadingAnimation >= 1;
+    if (polaroidLoadingJustCompleted) {
+        playSound(soundClick);
+    }
 }
 
 function drawPolaroidButton() {
@@ -760,19 +819,31 @@ function drawCursor() {
     let x = mouseX + w * 0.37;
     let y = mouseY + h * -0.37;
     if (held != null) {
-        cg.image(sticksHeld, x, y, w, h);
+        drawCursorWorldAware(sticksHeld,x,y,w,h)
     } else {
         if (fadeSticks) {
             let sticksFadeout = constrain(norm(frameCount - sticksFadeoutDelay, sticksLastReleasedFrame,
                 sticksLastReleasedFrame + sticksFadeoutDelay), 0, 1);
             cg.tint(1, 1 - sticksFadeout);
         }
-        cg.image(sticksIdle, x, y, w, h);
+        drawCursorWorldAware(sticksIdle,x,y,w,h)
     }
     cg.pop();
 }
 
+function drawCursorWorldAware(img,x,y,w,h) {
+    cg.push();
+    cg.image(img,x, y, w, h);
+    cg.tint(1, .5);
+    cg.image(img,x+width, y, w, h);
+    cg.image(img,x, y+height, w, h);
+    cg.image(img,x-width, y, w, h);
+    cg.image(img,x, y-height, w, h);
+    cg.pop();
+}
+
 function winGame() {
+    playSound(soundPolaroidWin);
     winningImageAngle = nextWinningImageAngle();
     winningImageAngles = [];
     for (let i = 0; i < winningImageBackgroundCount; i++) {
@@ -820,6 +891,9 @@ function restartGame() {
 function drop() {
     if (held != null) {
         held.startDropAnimation();
+        held.repulsionLerped.x = 0;
+        held.repulsionLerped.y = 0;
+        // playSound(soundDropCat);
     }
     held = null;
     sticksLastReleasedFrame = frameCount;
@@ -925,10 +999,11 @@ class Cat {
         this.dropAnimationDuration = 30;
         this.dropAnimationStarted = -this.dropAnimationDuration * 2;
         this.dropAnimationPos = createVector();
+        this.repulsionLerped = createVector();
     }
 
     updateDraw() {
-        this.mouseInteract();
+        this.holdInteract();
         this.updateTilt();
         this.updateDrawDropAnimation();
         if (this.isHeld()) {
@@ -1205,6 +1280,21 @@ class Cat {
         return this.direction === 3;
     }
 
+    setFacingRight() {
+        return this.direction = 0;
+    }
+
+    setFacingDown() {
+        return this.direction = 1;
+    }
+
+    setFacingLeft() {
+        return this.direction = 2;
+    }
+
+    setFacingUp() {
+        return this.direction = 3;
+    }
 
     flipIfNeeded() {
         if (this.flipHorizontally) {
@@ -1221,7 +1311,7 @@ class Cat {
         return held.id === this.id;
     }
 
-    mouseInteract() {
+    holdInteract() {
         let interactionWorldWrapTeleportX = 0;
         let interactionWorldWrapTeleportY = 0;
         if (held == null && mouseIsPressed) {
@@ -1255,6 +1345,7 @@ class Cat {
             }
             if (isDirectlyOverCat || isOverCatButAcrossTheScreen) {
                 held = this;
+                // playSound(soundPickUpCat);
             }
         }
         if (held != null && held.id === this.id) {
@@ -1262,8 +1353,6 @@ class Cat {
             this.pos.y += interactionWorldWrapTeleportY;
             this.pos.x = mouseX;
             this.pos.y = mouseY;
-            //  this.pos.x = lerp(this.pos.x, mouseX, .35);
-            //  this.pos.y = lerp(this.pos.y, mouseY, .35);
         }
     }
 
@@ -1272,6 +1361,7 @@ class Cat {
     }
 
     checkCollisions() {
+        let repulsion = createVector();
         for (let i = 0; i < cats.length; i++) {
             let otherCat = cats[i];
             if (otherCat.id === this.id) {
@@ -1285,12 +1375,66 @@ class Cat {
                 if (this.isInSittingStance()) {
                     this.stance--;
                 }
-                let fromOtherToThis = p5.Vector.sub(this.pos, otherCat.pos);
-                let repulsion = (1 / norm(distanceToOther, 0, this.interactionDistSquared)) * .5;
-                repulsion = min(repulsion, 5);
-                this.pos.add(fromOtherToThis.normalize().mult(repulsion));
+                repulsion.add(this.addRepulsion(otherCat.pos, distanceToOther, this.interactionDistSquared * 2, 0.5));
             }
         }
+        if (frameCount > this.dropAnimationStarted + this.dropAnimationDuration*5) {
+            let mouseRepulsion = this.worldAwareMouseRepulsion();
+            repulsion.add(mouseRepulsion);
+        }
+        this.repulsionLerped.x = lerp(this.repulsionLerped.x, repulsion.x, .05);
+        this.repulsionLerped.y = lerp(this.repulsionLerped.y, repulsion.y, .05);
+        this.repulsionLerped.limit(10);
+        if(this.repulsionLerped.mag() > 0.5) {
+            let heading = this.repulsionLerped.heading();
+            if(heading < -PI*.75 || heading > PI*.75) {
+                this.setFacingLeft();
+            }else if(abs(heading) < PI * .25){
+                this.setFacingRight();
+            }else if(heading > PI*.25 && heading < PI*.75) {
+                this.setFacingDown();
+            }else {
+                this.setFacingUp();
+            }
+        }
+        this.pos.add(this.repulsionLerped);
+    }
+
+    worldAwareMouseRepulsion() {
+        let mouseRepulsion = createVector();
+        mouseRepulsion.add(this.repulseVectorFrom(mouseX, mouseY));
+        if(mouseRepulsion.x + mouseRepulsion.y <= 0.1) {
+            mouseRepulsion.add(this.repulseVectorFrom(mouseX+width, mouseY));
+        }
+        if(mouseRepulsion.x + mouseRepulsion.y <= 0.1) {
+            mouseRepulsion.add(this.repulseVectorFrom(mouseX-width, mouseY));
+        }
+        if(mouseRepulsion.x + mouseRepulsion.y <= 0.1) {
+            mouseRepulsion.add(this.repulseVectorFrom(mouseX, mouseY+height));
+        }
+        if(mouseRepulsion.x + mouseRepulsion.y <= 0.1) {
+            mouseRepulsion.add(this.repulseVectorFrom(mouseX, mouseY-height));
+        }
+        return mouseRepulsion;
+    }
+
+    repulseVectorFrom(x, y) {
+        let repulseVector = createVector();
+        let distanceToMouse = distSquared(this.pos.x, this.pos.y, x, y);
+        if (distanceToMouse < this.interactionDistSquared * 6) {
+            if (this.isInSittingStance()) {
+                this.stance--;
+            }
+            repulseVector.add(this.addRepulsion(mouseVector, distanceToMouse, this.interactionDistSquared * 15, .5));
+        }
+        return repulseVector;
+    }
+
+    addRepulsion(from, dist, maxDist, amp) {
+        let fromOtherToThis = p5.Vector.sub(this.pos, from);
+        let repulsion = (1 / norm(dist, 0, maxDist)) * amp;
+        repulsion = min(repulsion, 5);
+        return fromOtherToThis.normalize().mult(repulsion);
     }
 
     uuid() {
