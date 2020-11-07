@@ -105,7 +105,7 @@ let labelTutorialBeQuick;
 let fontComicSans;
 
 let mutedSounds = false;
-// let mutedMusic = true;
+let mutedMusic = true;
 let music;
 
 let soundPolaroidWin;
@@ -137,7 +137,7 @@ function loadAssets() {
     fontComicSans = loadFont('assets\\comic_sans.ttf');
 
     soundFormats('mp3', 'ogg', 'wav');
-   // music = loadSound('assets\\sounds\\Contemplation.mp3');
+    music = loadSound('assets\\sounds\\GreenAndGray.mp3');
     soundClick = loadSound('assets\\sounds\\mouseclick.wav');
     soundClick.setVolume(0.5);
     soundPolaroidWin = loadSound('assets\\sounds\\photo.ogg');
@@ -180,39 +180,6 @@ function setup() {
     targetRectSize = createVector(width * .4, height * .4);
 }
 
-function sortCatsByY() {
-    cats.sort(function (a, b) {
-        if (a.pos.y < b.pos.y) {
-            return -1;
-        }
-        if (a.pos.y > b.pos.y) {
-            return 1;
-        }
-        return 0;
-    });
-}
-
-function updateDrawMuteButton() {
-    if (updateDrawButton(width * .11, height * .58, 160, 60, null, mutedSounds ? 'unmute' : 'mute', 36)) {
-        mutedSounds = !mutedSounds;
-        /*
-        mutedMusic = !mutedMusic;
-        if (mutedMusic) {
-            music.stop();
-        } else {
-            music.loop();
-        }*/
-    }
-
-}
-
-function playSound(sound) {
-    if (mutedSounds) {
-        return;
-    }
-    sound.play();
-}
-
 // noinspection JSUnusedGlobalSymbols
 function draw() {
     mainCanvas.position((windowWidth - width) / 2, (windowHeight - height) / 2);
@@ -239,7 +206,7 @@ function draw() {
         pg.image(cg, width * .5, height * .5, width, height);
     }
     if (gameState === 'intro' || gameState === 'win') {
-        updateDrawMuteButton();
+        updateDrawMuteButtons();
         updateDrawZenToggle();
         updateDrawCatCountSettings();
     }
@@ -247,6 +214,7 @@ function draw() {
         drawWinningImage();
         updateDrawBigButton(labelAgainButton);
         drawWinMessage();
+        drawDownloadButton();
     }
     // displayFPS();
     pg.pop();
@@ -259,7 +227,6 @@ function updateDrawCats() {
     cg.push();
     cg.translate(-width * .5, -height * .5);
     updateCatCountInsideTarget();
-
     sortCatsByY();
     updateDrawFreeCats();
     drawCursor();
@@ -384,7 +351,7 @@ function drawTextLink(x, y, prefixText, linkText, linkUrl) {
 function updateDrawZenToggle() {
     let w = width * .05;
     let x = width * .075;
-    let y = height * .75;
+    let y = height * .76;
     pg.push();
     pg.strokeWeight(4);
     pg.noFill();
@@ -466,6 +433,27 @@ function updateDrawCatCountSettings() {
     pg.textSize(30);
     pg.text(difficultyIndicator, 0, -height * .1);
     pg.pop();
+}
+
+function updateDrawMuteButtons() {
+    if (updateDrawButton(width * .110, height * .495, 160, 60, null, mutedSounds ? 'sounds x' : 'sounds o', 36)) {
+        mutedSounds = !mutedSounds;
+    }
+    if (updateDrawButton(width * .110, height * .615, 160, 60, null, mutedMusic ? 'music x' : 'music o', 36)) {
+        mutedMusic = !mutedMusic;
+        if (mutedMusic) {
+            music.pause();
+        } else {
+            music.loop(undefined, undefined, .5);
+        }
+    }
+}
+
+function playSound(sound) {
+    if (mutedSounds) {
+        return;
+    }
+    sound.play();
 }
 
 function drawAutomaticDifficultyIncrementAnimation(buttonDistance) {
@@ -574,6 +562,12 @@ function drawWinMessage() {
     pg.textSize(50);
     pg.text(winMessage, 0, 0)
     pg.pop();
+}
+
+function drawDownloadButton() {
+    if(updateDrawButton(width * .9, height * 0.9, 100, 100, null, 'jpg', 30)) {
+        save('Cat_Catcher_Win_With_'+lastWinCatCount+'_Cats.jpg');
+    }
 }
 
 function drawWinningImage() {
@@ -920,6 +914,18 @@ function generateCats() {
     for (let i = 0; i < catCount; i++) {
         cats.push(new Cat());
     }
+}
+
+function sortCatsByY() {
+    cats.sort(function (a, b) {
+        if (a.pos.y < b.pos.y) {
+            return -1;
+        }
+        if (a.pos.y > b.pos.y) {
+            return 1;
+        }
+        return 0;
+    });
 }
 
 function clamp(val, low, high) {
@@ -1425,7 +1431,7 @@ class Cat {
             if (this.isInSittingStance()) {
                 this.stance--;
             }
-            repulseVector.add(this.addRepulsion(mouseVector, distanceToMouse, this.interactionDistSquared * 15, .5));
+            repulseVector.add(this.addRepulsion(createVector(x,y), distanceToMouse, this.interactionDistSquared * 15, .5));
         }
         return repulseVector;
     }
