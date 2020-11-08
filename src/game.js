@@ -41,7 +41,6 @@ let tutorialTakeAPhotoUnderstood = false;
 
 let imageScale = 1;
 let held = null;
-let fadeSticks = false;
 let gameState = 'intro'; // known states: intro, play, win
 let pGameState = gameState;
 let zenMode = false;
@@ -111,7 +110,8 @@ let musicPlay;
 let musicWin;
 
 let soundPolaroidWin;
-let soundClick;
+let soundPolaroidClick;
+let soundMouseClick;
 
 // noinspection JSUnusedGlobalSymbols
 function preload() {
@@ -142,8 +142,8 @@ function loadAssets() {
     musicPlay = loadSound('assets\\sounds\\city_theme.mp3');
     musicWin = loadSound('assets\\sounds\\end_theme.mp3');
     musicWin.setVolume(0);
-    soundClick = loadSound('assets\\sounds\\mouseclick.wav');
-    soundClick.setVolume(0.5);
+    soundPolaroidClick = loadSound('assets\\sounds\\mouseclick.wav');
+    soundMouseClick = loadSound('assets\\sounds\\click2.wav');
     soundPolaroidWin = loadSound('assets\\sounds\\photo.ogg');
 }
 
@@ -257,6 +257,7 @@ function mousePressed() {
     }
     pmouseIsPressed = false;
     mouseIsPressed = true;
+    playSound(soundMouseClick);
 }
 
 // noinspection JSUnusedGlobalSymbols
@@ -444,7 +445,7 @@ function updateDrawMuteButtons() {
     if (updateDrawButton(width * .110, height * .495, 160, 60, null, mutedSounds ? 'sounds x' : 'sounds o', 36)) {
         mutedSounds = !mutedSounds;
         if (!mutedSounds) {
-            playSound(soundClick);
+            playSound(soundMouseClick);
         }
     }
     if (updateDrawButton(width * .110, height * .615, 160, 60, null, mutedMusic ? 'music x' : 'music o', 36)) {
@@ -699,10 +700,10 @@ function updatePolaroidButton() {
     let allCatsInsideTarget = areAllCatsInsideTarget();
     let loadingConditionsMet = allCatsInsideTarget && mouseIsInsidePolaroid;
     if (!pLoadingConditionsMet && loadingConditionsMet) {
-        playSound(soundClick);
+        playSound(soundPolaroidClick);
     }
     if (!pCatsInsideTarget && allCatsInsideTarget) {
-        playSound(soundClick);
+        playSound(soundPolaroidClick);
     }
     pLoadingConditionsMet = loadingConditionsMet;
     pCatsInsideTarget = allCatsInsideTarget;
@@ -718,7 +719,7 @@ function updatePolaroidButton() {
     polaroidLoadingAnimation = clamp(polaroidLoadingAnimation, 0, 1);
     polaroidLoadingJustCompleted = polaroidLoadingAnimationLastFrame < 1 && polaroidLoadingAnimation >= 1;
     if (polaroidLoadingJustCompleted) {
-        playSound(soundClick);
+        playSound(soundPolaroidClick);
     }
 }
 
@@ -835,16 +836,8 @@ function drawCursor() {
     let h = sticksHeld.height * imageScale;
     let x = mouseX + w * 0.37;
     let y = mouseY + h * -0.37;
-    if (held != null) {
-        drawCursorWorldAware(sticksHeld, x, y, w, h)
-    } else {
-        if (fadeSticks) {
-            let sticksFadeout = constrain(norm(frameCount - sticksFadeoutDelay, sticksLastReleasedFrame,
-                sticksLastReleasedFrame + sticksFadeoutDelay), 0, 1);
-            cg.tint(1, 1 - sticksFadeout);
-        }
-        drawCursorWorldAware(sticksIdle, x, y, w, h)
-    }
+    let cursorImage = (!mouseIsPressed && held === null) ? sticksIdle : sticksHeld;
+    drawCursorWorldAware(cursorImage, x, y, w, h);
     cg.pop();
 }
 
