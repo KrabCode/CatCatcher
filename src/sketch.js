@@ -43,6 +43,7 @@ let imageScale = 1;
 let held = null;
 let fadeSticks = false;
 let gameState = 'intro'; // known states: intro, play, win
+let pGameState = gameState;
 let zenMode = false;
 let introCatchphrase;
 let mouseVector;
@@ -106,7 +107,8 @@ let fontComicSans;
 
 let mutedSounds = false;
 let mutedMusic = true;
-let music;
+let musicPlay;
+let musicWin;
 
 let soundPolaroidWin;
 let soundClick;
@@ -137,7 +139,9 @@ function loadAssets() {
     fontComicSans = loadFont('assets\\comic_sans.ttf');
 
     soundFormats('mp3', 'ogg', 'wav');
-    music = loadSound('assets\\sounds\\GreenAndGray.mp3');
+    musicPlay = loadSound('assets\\sounds\\city_theme.mp3');
+    musicWin = loadSound('assets\\sounds\\end_theme.mp3');
+    musicWin.setVolume(0);
     soundClick = loadSound('assets\\sounds\\mouseclick.wav');
     soundClick.setVolume(0.5);
     soundPolaroidWin = loadSound('assets\\sounds\\photo.ogg');
@@ -216,6 +220,7 @@ function draw() {
         drawWinMessage();
         drawDownloadButton();
     }
+    updateMusic();
     // displayFPS();
     pg.pop();
     image(pg, 0, 0, width, height);
@@ -438,16 +443,34 @@ function updateDrawCatCountSettings() {
 function updateDrawMuteButtons() {
     if (updateDrawButton(width * .110, height * .495, 160, 60, null, mutedSounds ? 'sounds x' : 'sounds o', 36)) {
         mutedSounds = !mutedSounds;
+        if (!mutedSounds) {
+            playSound(soundClick);
+        }
     }
     if (updateDrawButton(width * .110, height * .615, 160, 60, null, mutedMusic ? 'music x' : 'music o', 36)) {
         mutedMusic = !mutedMusic;
         if (mutedMusic) {
-            music.pause();
+            musicPlay.pause();
+            musicWin.pause();
         } else {
-            music.loop(undefined, undefined, .5);
+            musicPlay.loop();
+            musicWin.loop();
         }
     }
 }
+
+function updateMusic() {
+    if(pGameState !== 'win' && gameState === 'win') {
+        musicPlay.fade(0, 2);
+        musicWin.fade(1, 2);
+    }else if(pGameState !== 'play' && gameState === 'play') {
+        musicPlay.fade(1, 2);
+        musicWin.fade(0, 2);
+    }
+    console.info(pGameState, gameState);
+    pGameState = gameState;
+}
+
 
 function playSound(sound) {
     if (mutedSounds) {
@@ -565,8 +588,8 @@ function drawWinMessage() {
 }
 
 function drawDownloadButton() {
-    if(updateDrawButton(width * .9, height * 0.9, 100, 100, null, 'jpg', 30)) {
-        save('Cat_Catcher_Win_With_'+lastWinCatCount+'_Cats.jpg');
+    if (updateDrawButton(width * .9, height * 0.9, 100, 100, null, 'jpg', 30)) {
+        save('Cat_Catcher_' + lastWinCatCount + '_Cat' + (lastWinCatCount > 1 ? 's' : '') + '.jpg');
     }
 }
 
@@ -675,10 +698,10 @@ let pCatsInsideTarget = false;
 function updatePolaroidButton() {
     let allCatsInsideTarget = areAllCatsInsideTarget();
     let loadingConditionsMet = allCatsInsideTarget && mouseIsInsidePolaroid;
-    if(!pLoadingConditionsMet && loadingConditionsMet) {
+    if (!pLoadingConditionsMet && loadingConditionsMet) {
         playSound(soundClick);
     }
-    if(!pCatsInsideTarget && allCatsInsideTarget) {
+    if (!pCatsInsideTarget && allCatsInsideTarget) {
         playSound(soundClick);
     }
     pLoadingConditionsMet = loadingConditionsMet;
@@ -813,26 +836,26 @@ function drawCursor() {
     let x = mouseX + w * 0.37;
     let y = mouseY + h * -0.37;
     if (held != null) {
-        drawCursorWorldAware(sticksHeld,x,y,w,h)
+        drawCursorWorldAware(sticksHeld, x, y, w, h)
     } else {
         if (fadeSticks) {
             let sticksFadeout = constrain(norm(frameCount - sticksFadeoutDelay, sticksLastReleasedFrame,
                 sticksLastReleasedFrame + sticksFadeoutDelay), 0, 1);
             cg.tint(1, 1 - sticksFadeout);
         }
-        drawCursorWorldAware(sticksIdle,x,y,w,h)
+        drawCursorWorldAware(sticksIdle, x, y, w, h)
     }
     cg.pop();
 }
 
-function drawCursorWorldAware(img,x,y,w,h) {
+function drawCursorWorldAware(img, x, y, w, h) {
     cg.push();
-    cg.image(img,x, y, w, h);
+    cg.image(img, x, y, w, h);
     cg.tint(1, .5);
-    cg.image(img,x+width, y, w, h);
-    cg.image(img,x, y+height, w, h);
-    cg.image(img,x-width, y, w, h);
-    cg.image(img,x, y-height, w, h);
+    cg.image(img, x + width, y, w, h);
+    cg.image(img, x, y + height, w, h);
+    cg.image(img, x - width, y, w, h);
+    cg.image(img, x, y - height, w, h);
     cg.pop();
 }
 
@@ -1384,22 +1407,22 @@ class Cat {
                 repulsion.add(this.addRepulsion(otherCat.pos, distanceToOther, this.interactionDistSquared * 2, 0.5));
             }
         }
-        if (frameCount > this.dropAnimationStarted + this.dropAnimationDuration*5) {
+        if (frameCount > this.dropAnimationStarted + this.dropAnimationDuration * 5) {
             let mouseRepulsion = this.worldAwareMouseRepulsion();
             repulsion.add(mouseRepulsion);
         }
         this.repulsionLerped.x = lerp(this.repulsionLerped.x, repulsion.x, .05);
         this.repulsionLerped.y = lerp(this.repulsionLerped.y, repulsion.y, .05);
         this.repulsionLerped.limit(10);
-        if(this.repulsionLerped.mag() > 0.5) {
+        if (this.repulsionLerped.mag() > 0.5) {
             let heading = this.repulsionLerped.heading();
-            if(heading < -PI*.75 || heading > PI*.75) {
+            if (heading < -PI * .75 || heading > PI * .75) {
                 this.setFacingLeft();
-            }else if(abs(heading) < PI * .25){
+            } else if (abs(heading) < PI * .25) {
                 this.setFacingRight();
-            }else if(heading > PI*.25 && heading < PI*.75) {
+            } else if (heading > PI * .25 && heading < PI * .75) {
                 this.setFacingDown();
-            }else {
+            } else {
                 this.setFacingUp();
             }
         }
@@ -1409,17 +1432,17 @@ class Cat {
     worldAwareMouseRepulsion() {
         let mouseRepulsion = createVector();
         mouseRepulsion.add(this.repulseVectorFrom(mouseX, mouseY));
-        if(mouseRepulsion.x + mouseRepulsion.y <= 0.1) {
-            mouseRepulsion.add(this.repulseVectorFrom(mouseX+width, mouseY));
+        if (mouseRepulsion.x + mouseRepulsion.y <= 0.1) {
+            mouseRepulsion.add(this.repulseVectorFrom(mouseX + width, mouseY));
         }
-        if(mouseRepulsion.x + mouseRepulsion.y <= 0.1) {
-            mouseRepulsion.add(this.repulseVectorFrom(mouseX-width, mouseY));
+        if (mouseRepulsion.x + mouseRepulsion.y <= 0.1) {
+            mouseRepulsion.add(this.repulseVectorFrom(mouseX - width, mouseY));
         }
-        if(mouseRepulsion.x + mouseRepulsion.y <= 0.1) {
-            mouseRepulsion.add(this.repulseVectorFrom(mouseX, mouseY+height));
+        if (mouseRepulsion.x + mouseRepulsion.y <= 0.1) {
+            mouseRepulsion.add(this.repulseVectorFrom(mouseX, mouseY + height));
         }
-        if(mouseRepulsion.x + mouseRepulsion.y <= 0.1) {
-            mouseRepulsion.add(this.repulseVectorFrom(mouseX, mouseY-height));
+        if (mouseRepulsion.x + mouseRepulsion.y <= 0.1) {
+            mouseRepulsion.add(this.repulseVectorFrom(mouseX, mouseY - height));
         }
         return mouseRepulsion;
     }
@@ -1431,7 +1454,7 @@ class Cat {
             if (this.isInSittingStance()) {
                 this.stance--;
             }
-            repulseVector.add(this.addRepulsion(createVector(x,y), distanceToMouse, this.interactionDistSquared * 15, .5));
+            repulseVector.add(this.addRepulsion(createVector(x, y), distanceToMouse, this.interactionDistSquared * 15, .5));
         }
         return repulseVector;
     }
