@@ -941,9 +941,14 @@ function updateDrawFreeCats() {
 }
 
 function generateCats() {
+    let speeds = [];
+    for (let i = 0; i < catCount; i++) {
+        speeds.push(map(i, 0, catCount-1, 0.25, 0.75));
+    }
     cats = [];
     for (let i = 0; i < catCount; i++) {
-        cats.push(new Cat());
+        let speed = speeds[i];
+        cats.push(new Cat(speed));
     }
 }
 
@@ -1003,7 +1008,7 @@ function random(a, b) {
 // noinspection SpellCheckingInspection
 class Cat {
 
-    constructor() {
+    constructor(speed) {
         this.id = this.uuid();
         this.currentImg = null;
         this.dirStableMinimumFrames = 60;
@@ -1019,7 +1024,7 @@ class Cat {
         this.sat = random(.15, .4);
         this.br = random(.8, 1);
         this.timeOffset = random(10);
-        this.speedMagnitude = random(.25, 0.75);
+        this.speedMagnitude = speed;
         this.pInsideTarget = false;
         this.exitTargetAnimationDuration = 30;
         this.exitTargetAnimationStarted = -this.exitTargetAnimationDuration * 2;
