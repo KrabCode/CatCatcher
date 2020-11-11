@@ -106,7 +106,7 @@ let mutedSounds = false;
 let mutedMusic = true;
 let musicPlay;
 let musicWin;
-let musicVolumeMax = .25;
+let musicVolumeMax;
 
 let soundPolaroidWin;
 let soundPolaroidClick;
@@ -147,9 +147,13 @@ function loadAssets() {
     musicPlay = loadSound('assets\\sounds\\play_theme.mp3');
     musicWin = loadSound('assets\\sounds\\win_theme.mp3');
     musicWin.setVolume(0);
+    musicVolumeMax = .05;
     soundPolaroidClick = loadSound('assets\\sounds\\switch2.wav');
-    soundMouseClick = loadSound('assets\\sounds\\click4.wav');
+    soundPolaroidClick.setVolume(.2);
     soundPolaroidWin = loadSound('assets\\sounds\\photo.ogg');
+    soundPolaroidWin.setVolume(.3);
+    soundMouseClick = loadSound('assets\\sounds\\click4.wav');
+    // soundMouseClick has volume 1, needs to be heard
 }
 
 function loadAsset(localPath, successCallback) {
