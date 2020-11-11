@@ -22,7 +22,7 @@ let defaultCatCount = 7;
 // let defaultCatCount = 50;
 let catCount = defaultCatCount;
 let catCountMinimum = 1;
-let catCountMaximum = 99;
+let catCountMaximum = 49;
 let lastWinCatCount = catCount;
 
 let winMessage;
@@ -201,15 +201,15 @@ function draw() {
     pg.push();
     updateCursor();
     updateTutorial();
-    if (gameState === 'intro') {
+    if (onIntroScreen()) {
         drawIntro();
         updateDrawPlayButton(labelPlayButton);
     }
-    if ((gameState === 'play' && !zenMode) || gameState === 'win') {
+    if ((onPlayScreen() && !zenMode) || onWinScreen()) {
         updatePolaroidButton();
         drawPolaroidButton();
     }
-    if (gameState === 'play') {
+    if (onPlayScreen()) {
         if (!zenMode) {
             drawTarget();
             drawTutorial();
@@ -217,18 +217,18 @@ function draw() {
         updateDrawCats();
         pg.image(cg, width * .5, height * .5, width, height);
     }
-    if (gameState === 'intro' || gameState === 'win') {
+    if (onIntroScreen() || onWinScreen()) {
         updateDrawMuteButtons();
         updateDrawZenToggle();
         updateDrawCatCountSettings();
     }
-    if (gameState === 'win') {
+    if (onWinScreen()) {
         drawWinningImage();
         updateDrawPlayButton(labelAgainButton);
         drawWinMessage();
         drawDownloadButton();
     }
-    updateMusic();
+    matchMusicToScreen();
     displayFPS();
     pg.pop();
     image(pg, 0, 0, width, height);
@@ -267,7 +267,7 @@ function displayFPS() {
 
 // noinspection JSUnusedGlobalSymbols
 function mousePressed() {
-    if (!zenMode && gameState === 'play' && polaroidLoadingAnimation >= 1 && mouseIsInsidePolaroid) {
+    if (!zenMode && onPlayScreen() && polaroidLoadingAnimation >= 1 && mouseIsInsidePolaroid) {
         winGame();
     }
     pmouseIsPressed = false;
@@ -284,7 +284,7 @@ function mouseReleased() {
 // noinspection JSUnusedGlobalSymbols
 function keyPressed() {
     if (keyCode === ESCAPE) {
-        if (gameState === 'play' || gameState === 'win') {
+        if (onPlayScreen() || onWinScreen()) {
             generateIntroCatchphrase();
             gameState = 'intro';
         }
@@ -342,11 +342,11 @@ function drawIntroCredits() {
         'with art by ', '235', 'https://www.instagram.com/ahojte235/');
 }
 
-function drawTextLink(x, y, prefixText, linkText, linkUrl) {
+function drawTextLink(x, y, prefixText, brightText, linkUrl) {
     pg.push();
     pg.textAlign(LEFT, TOP);
     pg.textSize(35);
-    let isOverLink = isPointInRectangle(mouseX, mouseY, x, y, pg.textWidth(prefixText) + pg.textWidth(linkText), 45);
+    let isOverLink = isPointInRectangle(mouseX, mouseY, x, y, pg.textWidth(prefixText) + pg.textWidth(brightText), 45);
     pg.fill(isOverLink ? grayscaleBright : grayscaleInteractive);
     pg.text(prefixText, x, y);
     if (isOverLink) {
@@ -364,7 +364,7 @@ function drawTextLink(x, y, prefixText, linkText, linkUrl) {
         cursor('arrow');
     }
     pg.fill(isOverLink ? grayscaleWhite : grayscaleInteractive);
-    pg.text(linkText, x + pg.textWidth(prefixText), y);
+    pg.text(brightText, x + pg.textWidth(prefixText), y);
     pg.pop();
 }
 
@@ -385,11 +385,45 @@ function updateDrawMuteButtons() {
         if (mutedMusic) {
             musicPlay.pause();
             musicWin.pause();
-        } else {
+            musicPlay.setVolume(0);
+            musicWin.setVolume(0);
+        }
+        if(!mutedMusic){
+            musicPlay.setVolume(0);
+            musicWin.setVolume(0);
             musicPlay.loop();
             musicWin.loop();
+            if(onIntroScreen()) {
+                musicPlay.fade(1, 1);
+            }
+            if(onWinScreen()) {
+                musicWin.fade(1, 1);
+            }
         }
     }
+}
+
+function matchMusicToScreen() {
+    if(pGameState !== 'win' && onWinScreen()) {
+        musicPlay.fade(0, 2);
+        musicWin.fade(1, 2);
+    }else if(pGameState !== 'play' && onPlayScreen()) {
+        musicPlay.fade(1, 2);
+        musicWin.fade(0, 2);
+    }
+    pGameState = gameState;
+}
+
+function onIntroScreen() {
+    return gameState === 'intro';
+}
+
+function onPlayScreen() {
+    return gameState === 'play';
+}
+
+function onWinScreen() {
+    return gameState === 'win';
 }
 
 function updateDrawZenToggle() {
@@ -461,7 +495,7 @@ function updateDrawCatCountSettings() {
     pg.textSize(30);
 
     let count = catCount;
-    if (gameState === 'win' && frameCount < winScrenStarted + newspaperAnimationDuration) {
+    if (onWinScreen() && frameCount < winScrenStarted + newspaperAnimationDuration) {
         count = lastWinCatCount; // display win count for a brief moment to give the +1 change more impact
     }
     let catCountLabel = count + " cat" + (count > 1 ? 's' : '');
@@ -640,7 +674,7 @@ function updateTutorial() {
     if (catCountInsideTargetJustFilled && !zenMode) {
         tutorialPutCatsHereUnderstood = true;
     }
-    if (gameState === 'win') {
+    if (onWinScreen()) {
         tutorialTakeAPhotoUnderstood = true;
     }
 }
@@ -679,7 +713,7 @@ function isInsideTarget(x, y) {
 }
 
 function areAllCatsInsideTarget() {
-    return catCountInsideTarget === catCount && gameState === 'play';
+    return catCountInsideTarget === catCount && onPlayScreen();
 }
 
 function drawTarget() {
@@ -711,7 +745,7 @@ function updatePolaroidButton() {
     } else {
         polaroidLoadingAnimation -= polaroidLoadingAnimationIncrementPerFrame * 2;
     }
-    if (gameState === 'win') {
+    if (onWinScreen()) {
         polaroidLoadingAnimation = 1;
     }
     polaroidLoadingAnimation = clamp(polaroidLoadingAnimation, 0, 1);
@@ -746,15 +780,15 @@ function drawPolaroidButton() {
         bigRayGrowthStarted = frameCount;
     }
     if (polaroidLoadingAnimation > polaroidLoadingAnimationIncrementPerFrame) { // same silly if-statement workaround as before
-        pg.fill(gameState === 'play' ? grayscaleWhite : grayscaleInteractive);
+        pg.fill(onPlayScreen() ? grayscaleWhite : grayscaleInteractive);
         pg.noStroke();
         pg.arc(0, 0, polaroidRadius * 2, polaroidRadius * 2, -HALF_PI, -HALF_PI + TAU * ease(polaroidLoadingAnimation, 2));
     }
-    if (polaroidLoadingAnimation >= 1 || gameState === 'win') {
+    if (polaroidLoadingAnimation >= 1 || onWinScreen()) {
         drawPolaroidBigRays();
     }
     pg.translate(3, 5); // the polaroid picture is slightly off center so we need a minor correction
-    pg.image(gameState === 'play' ? polaroidIdle : polaroidBlep, 0, 0);
+    pg.image(onPlayScreen() ? polaroidIdle : polaroidBlep, 0, 0);
     pg.pop();
 }
 
@@ -798,17 +832,6 @@ function drawPolaroidBigRays() {
     }
 }
 
-function updateMusic() {
-    if(pGameState !== 'win' && gameState === 'win') {
-        musicPlay.fade(0, 2);
-        musicWin.fade(1, 2);
-    }else if(pGameState !== 'play' && gameState === 'play') {
-        musicPlay.fade(1, 2);
-        musicWin.fade(0, 2);
-    }
-    pGameState = gameState;
-}
-
 function playSound(sound) {
     if (mutedSounds) {
         return;
@@ -827,7 +850,7 @@ function animate(start, duration) {
 
 function updateCursor() {
     cursor(ARROW);
-    if (gameState === 'play') {
+    if (onPlayScreen()) {
         mouseIsInsidePolaroid = distSquared(mouseX, mouseY, polaroidPos.x, polaroidPos.y) < polaroidRadiusSquared;
         useImageCursor = true;
         if (mouseIsInsidePolaroid && areAllCatsInsideTarget()) {
@@ -1030,14 +1053,7 @@ class Cat {
         this.exitTargetAnimationStarted = -this.exitTargetAnimationDuration * 2;
         this.exitTargetAnimationPos = createVector();
         this.flipHorizontally = false;
-        this.tiltEnabled = false;
-        this.tilt = 0;
-        this.tiltSpeed = 0;
-        this.tiltConstraint = HALF_PI;
-        this.tiltSpeedConstraint = PI * .01;
-        this.tiltGravityAcceleration = 0.5;
-        this.tiltDragCoefficient = .9;
-        this.tiltSideForceCoefficient = .02;
+
         this.dropAnimationDuration = 30;
         this.dropAnimationStarted = -this.dropAnimationDuration * 2;
         this.dropAnimationPos = createVector();
@@ -1046,7 +1062,6 @@ class Cat {
 
     updateDraw() {
         this.holdInteract();
-        // this.updateTilt();
         this.updateDrawDropAnimation();
         if (this.isHeld()) {
             this.resetStance();
@@ -1121,21 +1136,6 @@ class Cat {
     updateCurrentImage() {
         let frame = animateOscillation(this.timeOffset);
         this.currentImg = this.currentImage(frame);
-    }
-
-    updateTilt() {
-        if (!this.isHeld() || !this.tiltEnabled) {
-            this.tilt = lerp(this.tilt, 0, 0.25);
-            return;
-        }
-        let mouseSpeed = createVector(pmouseX - mouseX, pmouseY - mouseY).limit(5);
-        let tangentDir = p5.Vector.fromAngle(this.tilt + PI);
-        this.tiltSpeed += tangentDir.dot(mouseSpeed) * this.tiltSideForceCoefficient;
-        this.tiltSpeed -= sin(this.tilt) * this.tiltGravityAcceleration;
-        this.tiltSpeed *= this.tiltDragCoefficient;
-        this.tiltSpeed = constrain(this.tiltSpeed, -this.tiltSpeedConstraint, this.tiltSpeedConstraint);
-        this.tilt += this.tiltSpeed;
-        this.tilt = constrain(this.tilt, -this.tiltConstraint, this.tiltConstraint);
     }
 
     isInMovingStance() {
