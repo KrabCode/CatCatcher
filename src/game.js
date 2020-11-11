@@ -106,6 +106,7 @@ let mutedSounds = false;
 let mutedMusic = true;
 let musicPlay;
 let musicWin;
+let musicVolumeMax = .25;
 
 let soundPolaroidWin;
 let soundPolaroidClick;
@@ -394,10 +395,10 @@ function updateDrawMuteButtons() {
             musicPlay.loop();
             musicWin.loop();
             if(onIntroScreen()) {
-                musicPlay.fade(1, 1);
+                musicPlay.fade(musicVolumeMax, 1);
             }
             if(onWinScreen()) {
-                musicWin.fade(1, 1);
+                musicWin.fade(musicVolumeMax, 1);
             }
         }
     }
@@ -406,9 +407,9 @@ function updateDrawMuteButtons() {
 function matchMusicToScreen() {
     if(pGameState !== 'win' && onWinScreen()) {
         musicPlay.fade(0, 2);
-        musicWin.fade(1, 2);
+        musicWin.fade(musicVolumeMax, 2);
     }else if(pGameState !== 'play' && onPlayScreen()) {
-        musicPlay.fade(1, 2);
+        musicPlay.fade(musicVolumeMax, 2);
         musicWin.fade(0, 2);
     }
     pGameState = gameState;
