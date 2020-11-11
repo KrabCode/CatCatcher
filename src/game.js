@@ -19,7 +19,7 @@ let rectRoundedness = 100;
 let cats;
 let defaultCatCount = 7;
 // let defaultCatCount = 1;
-// let defaultCatCount = 99;
+// let defaultCatCount = 50;
 let catCount = defaultCatCount;
 let catCountMinimum = 1;
 let catCountMaximum = 99;
@@ -46,10 +46,6 @@ let pGameState = gameState;
 let zenMode = false;
 let introCatchphrase;
 let mouseVector;
-
-let sticksFadeoutDelay = 60;
-let sticksFadeoutDuration = 60;
-let sticksLastReleasedFrame = -sticksFadeoutDuration * 3;
 
 let polaroidDiameter = 200;
 let polaroidRadius = 100;
@@ -104,6 +100,8 @@ let labelTutorialBeQuick;
 
 let fontComicSans;
 
+let soundIcon;
+let musicIcon;
 let mutedSounds = false;
 let mutedMusic = true;
 let musicPlay;
@@ -136,6 +134,8 @@ function loadAssets() {
     labelTutorialTakeAPhoto = loadAsset("tutorial-thentakeaphoto.png");
     labelTutorialPutCatsHere = loadAsset("tutorial-putcatshere.png");
     labelTutorialBeQuick = loadAsset("tutorial-bequick.png");
+    soundIcon = loadAsset("sound-icon.png");
+    musicIcon = loadAsset("music-icon.png");
     fontComicSans = loadFont('assets\\comic_sans.ttf');
 
     soundFormats('mp3', 'ogg', 'wav');
@@ -221,7 +221,7 @@ function draw() {
         drawDownloadButton();
     }
     updateMusic();
-    // displayFPS();
+    displayFPS();
     pg.pop();
     image(pg, 0, 0, width, height);
     pmouseIsPressed = mouseIsPressed;
@@ -239,14 +239,21 @@ function updateDrawCats() {
     cg.pop();
 }
 
+let fpsSum = 0;
+let fpsAvg = 0;
 // noinspection JSUnusedGlobalSymbols
 function displayFPS() {
+    fpsSum += frameRate();
+    if(frameCount % 60 === 0) {
+        fpsAvg = fpsSum / 60;
+        fpsSum = 0;
+    }
     pg.push();
     pg.textAlign(LEFT, CENTER);
     pg.textSize(40);
     pg.fill(grayscaleInteractiveHover);
     pg.noStroke();
-    pg.text('fps ' + frameRate().toFixed(0), 20, 40);
+    pg.text('fps ' + floor(fpsAvg), 20, 40);
     pg.pop();
 }
 
@@ -394,12 +401,11 @@ function updateDrawZenToggle() {
         pg.circle(x, y, w);
     }
     pg.noStroke();
-    pg.fill(grayscaleInteractive);
+    pg.fill(grayscaleInteractiveHover);
     pg.textSize(35);
-    pg.textAlign(CENTER, CENTER);
-    pg.translate(x + w * 2.0, y - w * .125);
-    pg.rotate();
-    pg.text('zen mode', 0, 0);
+    pg.textAlign(LEFT, CENTER);
+    pg.translate(x + w*.75, y - w * .2);
+    pg.text(zenMode?'zen: no goals':"zen", 0, 0);
     pg.pop();
 }
 
@@ -442,13 +448,15 @@ function updateDrawCatCountSettings() {
 }
 
 function updateDrawMuteButtons() {
-    if (updateDrawButton(width * .110, height * .495, 160, 60, null, mutedSounds ? 'sounds x' : 'sounds o', 36)) {
+    let x = width * .075;
+    let w = width * .05;
+    if (updateDrawButton(x, height * .495, w, w, soundIcon, mutedSounds?'        x':'        o', 36)) {
         mutedSounds = !mutedSounds;
         if (!mutedSounds) {
             playSound(soundMouseClick);
         }
     }
-    if (updateDrawButton(width * .110, height * .615, 160, 60, null, mutedMusic ? 'music x' : 'music o', 36)) {
+    if (updateDrawButton(x, height * .615, w, w, musicIcon, mutedMusic?'        x':'        o', 36)) {
         mutedMusic = !mutedMusic;
         if (mutedMusic) {
             musicPlay.pause();
@@ -468,7 +476,6 @@ function updateMusic() {
         musicPlay.fade(1, 2);
         musicWin.fade(0, 2);
     }
-    console.info(pGameState, gameState);
     pGameState = gameState;
 }
 
@@ -501,7 +508,7 @@ function drawAutomaticDifficultyIncrementAnimation(buttonDistance) {
 
 function labelByDifficulty() {
     if (zenMode) {
-        return 'no rules';
+        return '';
     }
     if (catCount < 5) {
         return 'very easy';
@@ -906,7 +913,6 @@ function drop() {
         // playSound(soundDropCat);
     }
     held = null;
-    sticksLastReleasedFrame = frameCount;
 }
 
 function updateDrawHeldCat() {
@@ -1026,7 +1032,7 @@ class Cat {
 
     updateDraw() {
         this.holdInteract();
-        this.updateTilt();
+        // this.updateTilt();
         this.updateDrawDropAnimation();
         if (this.isHeld()) {
             this.resetStance();
@@ -1209,6 +1215,7 @@ class Cat {
         cg.push();
         this.flipHorizontally = this.isFacingLeft() && !this.isHeld();
         cg.tint(this.hue, this.sat, this.br, 1);
+        cg.translate(this.pos.x, this.pos.y);
         this.drawCatAtPos();
         this.drawCatWrapAround();
         cg.pop();
@@ -1217,9 +1224,8 @@ class Cat {
 
     drawCatAtPos() {
         cg.push();
-        cg.translate(this.pos.x, this.pos.y);
         this.flipIfNeeded();
-        cg.rotate(this.tilt);
+        // cg.rotate(this.tilt);
         cg.image(this.currentImg, 0, 0);
         cg.pop();
     }
@@ -1228,14 +1234,13 @@ class Cat {
         cg.push();
         cg.translate(x, y);
         this.flipIfNeeded();
-        cg.rotate(this.tilt);
+        // cg.rotate(this.tilt);
         cg.image(this.currentImg, 0, 0);
         cg.pop();
     }
 
     drawCatWrapAround() {
         cg.push();
-        cg.translate(this.pos.x, this.pos.y);
         let leftBorder = this.pos.x < this.size / 2;
         let rightBorder = this.pos.x > width - this.size / 2;
         let topBorder = this.pos.y < this.size / 2;
