@@ -8,36 +8,36 @@ let pmouseIsPressed = false;
 let mouseIsInsidePolaroid = false;
 let useImageCursor;
 
-const grayscaleBackground = .15;
-const grayscaleTarget = 0.225;
-const grayscaleInteractive = 0.35;
-const grayscaleInteractiveHover = 0.5;
-const grayscaleBright = 0.75;
-const grayscaleWhite = 1;
-const rectRoundedness = 100;
+let grayscaleBackground = .15;
+let grayscaleTarget = 0.225;
+let grayscaleInteractive = 0.35;
+let grayscaleInteractiveHover = 0.5;
+let grayscaleBright = 0.75;
+let grayscaleWhite = 1;
+let rectRoundedness = 100;
 
 let cats;
-const defaultCatCount = 7;
+let defaultCatCount = 7;
 let catCount = defaultCatCount;
-const catCountMinimum = 1;
-const catCountMaximum = 49;
+let catCountMinimum = 1;
+let catCountMaximum = 49;
 let lastWinCatCount = catCount;
 
 let winMessage;
 let winningImageAngle;
-const winningImageBackgroundCount = 3;
+let winningImageBackgroundCount = 3;
 let winningImageAngles;
 let winningImage;
-const newspaperAnimationDuration = 40;
-const difficultyAnimationDuration = 120;
+let newspaperAnimationDuration = 40;
+let difficultyAnimationDuration = 120;
 let winScrenStarted = -newspaperAnimationDuration;
 
 let tutorialPutCatsHereUnderstood = false;
-const tutorialPutCatsHereFadeoutDuration = 100;
+let tutorialPutCatsHereFadeoutDuration = 100;
 let tutorialPutCatsHereFadeoutStartFrame = 0;
 let tutorialTakeAPhotoUnderstood = false;
 
-const imageScale = 1;
+let imageScale = 1;
 let held = null;
 let gameState = 'intro'; // known states: intro, play, win
 let pGameState = gameState;
@@ -45,27 +45,27 @@ let zenMode = false;
 let introCatchphrase;
 let mouseVector;
 
-const polaroidDiameter = 200;
-const polaroidRadius = 100;
-const polaroidRadiusSquared = 10000;
+let polaroidDiameter = 200;
+let polaroidRadius = 100;
+let polaroidRadiusSquared = 10000;
 let polaroidPos;
-const polaroidLoadingDuration = 120;
-const polaroidLoadingAnimationIncrementPerFrame = 1 / polaroidLoadingDuration;
+let polaroidLoadingDuration = 120;
+let polaroidLoadingAnimationIncrementPerFrame = 1 / polaroidLoadingDuration;
 let polaroidLoadingAnimation = 0;
 let polaroidLoadingJustCompleted = false;
 
 let repeatingMousePressStarted;
-const repeatingMousePressWaitDuration = 20;
-const repeatingSpeed = 6;
+let repeatingMousePressWaitDuration = 20;
+let repeatingSpeed = 6;
 
-const bigRayGrowthDuration = 60;
+let bigRayGrowthDuration = 60;
 let bigRayGrowthStarted = -bigRayGrowthDuration * 2;
 
-const smallRayAnimationDuration = 60;
+let smallRayAnimationDuration = 60;
 let smallRayAnimationStarted = -smallRayAnimationDuration * 2;
 
 let rayRotationTime = 0;
-const rayCount = 12;
+let rayCount = 12;
 
 let targetRectPos;
 let targetRectSize;
@@ -170,8 +170,8 @@ function loadAsset(localPath, successCallback) {
 
 // noinspection JSUnusedGlobalSymbols
 function setup() {
-    const idealWidth = 1366;
-    const idealHeight = 768;
+    let idealWidth = 1366;
+    let idealHeight = 768;
     let scale = min(clamp(norm(windowWidth, 0, idealWidth), 0, 1), clamp(norm(windowHeight, 0, idealHeight), 0, 1));
     scale = max(scale, 0.75);
     mainCanvas = createCanvas(idealWidth * scale, idealHeight * scale);
@@ -239,7 +239,7 @@ function draw() {
         drawDownloadButton();
     }
     matchMusicToScreen();
-    displayFPS();
+    // displayFPS();
     pg.pop();
     image(pg, 0, 0, width, height);
     pmouseIsPressed = mouseIsPressed;
@@ -354,7 +354,7 @@ function drawTextLink(x, y, prefixText, brightText, linkUrl) {
     pg.push();
     pg.textAlign(LEFT, TOP);
     pg.textSize(35);
-    const isOverLink = isPointInRectangle(mouseX, mouseY, x, y, pg.textWidth(prefixText) + pg.textWidth(brightText), 45);
+    let isOverLink = isPointInRectangle(mouseX, mouseY, x, y, pg.textWidth(prefixText) + pg.textWidth(brightText), 45);
     pg.fill(isOverLink ? grayscaleBright : grayscaleInteractive);
     pg.text(prefixText, x, y);
     if (isOverLink) {
@@ -377,9 +377,9 @@ function drawTextLink(x, y, prefixText, brightText, linkUrl) {
 }
 
 function updateDrawMuteButtons() {
-    const x = configButtonsAnchor.x;
-    const y0 = configButtonsAnchor.y - configButtonsRange.y;
-    const w = configButtonsSize;
+    let x = configButtonsAnchor.x;
+    let y0 = configButtonsAnchor.y - configButtonsRange.y;
+    let w = configButtonsSize;
 
     if (updateDrawButton(x, y0, w, w, soundIcon, mutedSounds ? '         x' : '         o', 36)) {
         mutedSounds = !mutedSounds;
@@ -387,7 +387,7 @@ function updateDrawMuteButtons() {
             playSound(soundMouseClick);
         }
     }
-    const y1 = configButtonsAnchor.y;
+    let y1 = configButtonsAnchor.y;
     if (updateDrawButton(x, y1, w, w, musicIcon, mutedMusic ? '         x' : '         o', 36)) {
         mutedMusic = !mutedMusic;
         if (mutedMusic) {
@@ -435,14 +435,14 @@ function onWinScreen() {
 }
 
 function updateDrawZenToggle() {
-    const x = configButtonsAnchor.x;
-    const y = configButtonsAnchor.y + configButtonsRange.y;
-    const w = configButtonsSize;
+    let x = configButtonsAnchor.x;
+    let y = configButtonsAnchor.y + configButtonsRange.y;
+    let w = configButtonsSize;
 
     pg.push();
     pg.strokeWeight(4);
     pg.noFill();
-    const isMouseOver = isPointInRectangle(mouseX, mouseY, x - w * 0.5, y - w * 0.5, w, w)
+    let isMouseOver = isPointInRectangle(mouseX, mouseY, x - w * 0.5, y - w * 0.5, w, w)
     if (isMouseOver) {
         if (mouseIsPressed && !pmouseIsPressed) {
             zenMode = !zenMode;
@@ -457,10 +457,10 @@ function updateDrawZenToggle() {
         pg.rotate(radians(frameCount));
         for (let r = w; r >= 0; r -= 30) {
             pg.beginShape(TRIANGLE_STRIP);
-            const detail = 50;
+            let detail = 50;
             for (let v = 0; v <= detail; v++) {
-                const vNorm = norm(v, 0, detail);
-                const theta = vNorm * TAU * 0.9;
+                let vNorm = norm(v, 0, detail);
+                let theta = vNorm * TAU * 0.9;
                 pg.stroke(lerp(grayscaleBackground, isMouseOver ? grayscaleBright : grayscaleInteractiveHover, vNorm));
                 pg.vertex(0.5 * r * cos(theta), 0.5 * r * sin(theta));
                 pg.vertex(0.475 * r * cos(theta), 0.475 * r * sin(theta));
@@ -483,12 +483,12 @@ function updateDrawZenToggle() {
 }
 
 function updateDrawCatCountSettings() {
-    const y = height * 0.78;
-    const x = width * 0.5;
-    const w = width * 0.05;
-    const buttonDistance = width * 0.075;
-    const catCountSub = updateDrawButton(x - buttonDistance, y, w, w * 0.5, null, '-', 40, true);
-    const catCountAdd = updateDrawButton(x + buttonDistance, y, w, w * 0.5, null, '+', 40, true);
+    let y = height * 0.78;
+    let x = width * 0.5;
+    let w = width * 0.05;
+    let buttonDistance = width * 0.075;
+    let catCountSub = updateDrawButton(x - buttonDistance, y, w, w * 0.5, null, '-', 40, true);
+    let catCountAdd = updateDrawButton(x + buttonDistance, y, w, w * 0.5, null, '+', 40, true);
     if (catCountSub) {
         catCount--;
     }
@@ -506,11 +506,11 @@ function updateDrawCatCountSettings() {
     if (onWinScreen() && frameCount < winScrenStarted + newspaperAnimationDuration) {
         count = lastWinCatCount; // display win count for a brief moment to give the +1 change more impact
     }
-    const catCountLabel = count + " cat" + (count > 1 ? 's' : '');
+    let catCountLabel = count + " cat" + (count > 1 ? 's' : '');
     pg.translate(x, y - height * 0.01);
     pg.text(catCountLabel, 0, 0);
     drawAutomaticDifficultyIncrementAnimation(buttonDistance);
-    const difficultyIndicator = labelByDifficulty();
+    let difficultyIndicator = labelByDifficulty();
     pg.fill(grayscaleInteractiveHover);
     pg.textAlign(CENTER, CENTER);
     pg.textSize(30);
@@ -520,7 +520,7 @@ function updateDrawCatCountSettings() {
 }
 
 function updateDrawPlayButton(label) {
-    const clicked = updateDrawButton(width * 0.5, height * 0.9, width * 0.22, height * 0.13, label[animateOscillation()], undefined, undefined, false);
+    let clicked = updateDrawButton(width * 0.5, height * 0.9, width * 0.22, height * 0.13, label[animateOscillation()], undefined, undefined, false);
     if (clicked) {
         restartGame();
     }
@@ -531,15 +531,15 @@ function updateDrawButton(x, y, w, h, labelImage, labelText, textScale, repeatin
     pg.push();
     pg.noStroke();
     pg.fill(grayscaleInteractive);
-    const hover = isPointInRectangle(mouseX, mouseY, x - w * 0.5, y - h * 0.5, w, h);
+    let hover = isPointInRectangle(mouseX, mouseY, x - w * 0.5, y - h * 0.5, w, h);
     if (hover) {
         pg.fill(grayscaleInteractiveHover);
         cursor('pointer');
     }
-    const shouldRepeat = repeating && frameCount > repeatingMousePressStarted + repeatingMousePressWaitDuration;
+    let shouldRepeat = repeating && frameCount > repeatingMousePressStarted + repeatingMousePressWaitDuration;
     if (hover && mouseIsPressed && (shouldRepeat || !pmouseIsPressed)) {
         clicked = true;
-        const skipThisRepeat = pmouseIsPressed && shouldRepeat && frameCount % repeatingSpeed !== 0;
+        let skipThisRepeat = pmouseIsPressed && shouldRepeat && frameCount % repeatingSpeed !== 0;
         if (skipThisRepeat) {
             clicked = false;
         }
@@ -595,7 +595,7 @@ function drawDownloadButton() {
 function drawWinningImage() {
     pg.push();
     pg.translate(width * 0.5, height * 0.45);
-    const newspaperAnimation = animate(winScrenStarted, newspaperAnimationDuration);
+    let newspaperAnimation = animate(winScrenStarted, newspaperAnimationDuration);
     pg.imageMode(CENTER);
     pg.rectMode(CENTER);
     pg.strokeWeight(5);
@@ -622,12 +622,12 @@ function drawAutomaticDifficultyIncrementAnimation(buttonDistance) {
     if (gameState !== 'win') {
         return;
     }
-    const difficultyAnimationStarted = winScrenStarted + newspaperAnimationDuration;
-    const difficultyAnimation = animate(difficultyAnimationStarted, difficultyAnimationDuration);
+    let difficultyAnimationStarted = winScrenStarted + newspaperAnimationDuration;
+    let difficultyAnimation = animate(difficultyAnimationStarted, difficultyAnimationDuration);
     if (difficultyAnimation <= 0) {
         return;
     }
-    const alpha = 1 - difficultyAnimation;
+    let alpha = 1 - difficultyAnimation;
     pg.push();
     pg.noStroke();
     pg.fill(grayscaleWhite, alpha);
@@ -665,7 +665,7 @@ function drawTutorial() {
     if (!tutorialPutCatsHereUnderstood) {
         tutorialPutCatsHereFadeoutStartFrame = frameCount;
     }
-    const tutorialPutCatsHereAlpha = 1. - animate(tutorialPutCatsHereFadeoutStartFrame, tutorialPutCatsHereFadeoutDuration);
+    let tutorialPutCatsHereAlpha = 1. - animate(tutorialPutCatsHereFadeoutStartFrame, tutorialPutCatsHereFadeoutDuration);
     if (tutorialPutCatsHereAlpha > 0) {
         pg.tint(0.6, tutorialPutCatsHereAlpha);
         pg.image(labelTutorialPutCatsHere, targetRectPos.x, targetRectPos.y);
@@ -690,7 +690,7 @@ function updateTutorial() {
 function updateCatCountInsideTarget() {
     let result = 0;
     for (let i = 0; i < catCount; i++) {
-        const cat = cats[i];
+        let cat = cats[i];
         if (isInsideTargetWorldWrapAware(cat.pos.x, cat.pos.y)) {
             result++;
         }
@@ -734,8 +734,8 @@ function drawTarget() {
 }
 
 function updatePolaroidButton() {
-    const allCatsInsideTarget = areAllCatsInsideTarget();
-    const loadingConditionsMet = allCatsInsideTarget && mouseIsInsidePolaroid;
+    let allCatsInsideTarget = areAllCatsInsideTarget();
+    let loadingConditionsMet = allCatsInsideTarget && mouseIsInsidePolaroid;
     if (!pLoadingConditionsMet && loadingConditionsMet) {
         playSound(soundPolaroidClick);
     }
@@ -744,7 +744,7 @@ function updatePolaroidButton() {
     }
     pLoadingConditionsMet = loadingConditionsMet;
     pCatsInsideTarget = allCatsInsideTarget;
-    const polaroidLoadingAnimationLastFrame = polaroidLoadingAnimation;
+    let polaroidLoadingAnimationLastFrame = polaroidLoadingAnimation;
     if (loadingConditionsMet) {
         polaroidLoadingAnimation += polaroidLoadingAnimationIncrementPerFrame;
     } else {
@@ -798,19 +798,19 @@ function drawPolaroidButton() {
 }
 
 function drawPolaroidSmallRays() {
-    const growthAnimation = animateGrowth(smallRayAnimationStarted, smallRayAnimationDuration);
+    let growthAnimation = animateGrowth(smallRayAnimationStarted, smallRayAnimationDuration);
     rayRotationTime += growthAnimation * 0.005;
     pg.stroke(grayscaleWhite);
     pg.push();
     pg.strokeWeight(5);
-    const extensionLength = polaroidDiameter * 0.15;
-    const pointerRadius = polaroidDiameter * 0.65;
-    const handleRadius = pointerRadius + extensionLength * growthAnimation;
+    let extensionLength = polaroidDiameter * 0.15;
+    let pointerRadius = polaroidDiameter * 0.65;
+    let handleRadius = pointerRadius + extensionLength * growthAnimation;
     for (let i = 0; i < rayCount; i++) {
-        const iNorm = norm(i, 0, rayCount);
-        const theta = iNorm * TAU + rayRotationTime;
-        const pointerX = pointerRadius * cos(theta);
-        const pointerY = pointerRadius * sin(theta);
+        let iNorm = norm(i, 0, rayCount);
+        let theta = iNorm * TAU + rayRotationTime;
+        let pointerX = pointerRadius * cos(theta);
+        let pointerY = pointerRadius * sin(theta);
         pg.line(pointerX, pointerY, handleRadius * cos(theta), handleRadius * sin(theta));
         // let arrowheadRadius = pointerRadius + extensionLength * .35 * growthAnimation;
         // pg.line(pointerX, pointerY, arrowheadRadius * cos(theta+.05), arrowheadRadius * sin(theta+.05));
@@ -820,18 +820,18 @@ function drawPolaroidSmallRays() {
 }
 
 function drawPolaroidBigRays() {
-    const growthAnimation = animateGrowth(bigRayGrowthStarted, bigRayGrowthDuration);
+    let growthAnimation = animateGrowth(bigRayGrowthStarted, bigRayGrowthDuration);
     rayRotationTime += growthAnimation * 0.01;
-    const rayRadiusMiddle = polaroidDiameter * 0.75;
-    const rayGrowthAnimationEased = ease(growthAnimation, 3);
-    const rayLength = polaroidDiameter * 0.3 * rayGrowthAnimationEased;
+    let rayRadiusMiddle = polaroidDiameter * 0.75;
+    let rayGrowthAnimationEased = ease(growthAnimation, 3);
+    let rayLength = polaroidDiameter * 0.3 * rayGrowthAnimationEased;
     pg.stroke(grayscaleWhite);
     pg.strokeWeight(5);
     for (let i = 0; i < rayCount; i++) {
-        const iNorm = norm(i, 0, rayCount);
-        const theta = iNorm * TAU + TAU / (rayCount * 2.) + rayRotationTime;
-        const rayInnerRadius = rayRadiusMiddle - rayLength * 0.5;
-        const rayOuterRadius = rayRadiusMiddle + rayLength * 0.5;
+        let iNorm = norm(i, 0, rayCount);
+        let theta = iNorm * TAU + TAU / (rayCount * 2.) + rayRotationTime;
+        let rayInnerRadius = rayRadiusMiddle - rayLength * 0.5;
+        let rayOuterRadius = rayRadiusMiddle + rayLength * 0.5;
         pg.line(rayInnerRadius * cos(theta), rayInnerRadius * sin(theta),
             rayOuterRadius * cos(theta), rayOuterRadius * sin(theta));
     }
@@ -845,7 +845,7 @@ function playSound(sound) {
 }
 
 function animateGrowth(start, duration) {
-    const animation = animate(start, duration);
+    let animation = animate(start, duration);
     return clamp(pow(animation, 0.25), 0, 1); // juicy numbers
 }
 
@@ -876,11 +876,11 @@ function drawCursor() {
     }
     noCursor();
     cg.push();
-    const w = sticksHeld.width * imageScale;
-    const h = sticksHeld.height * imageScale;
-    const x = mouseX + w * 0.37;
-    const y = mouseY + h * -0.37;
-    const cursorImage = (!mouseIsPressed && held === null) ? sticksIdle : sticksHeld;
+    let w = sticksHeld.width * imageScale;
+    let h = sticksHeld.height * imageScale;
+    let x = mouseX + w * 0.37;
+    let y = mouseY + h * -0.37;
+    let cursorImage = (!mouseIsPressed && held === null) ? sticksIdle : sticksHeld;
     drawCursorWorldAware(cursorImage, x, y, w, h);
     cg.pop();
 }
@@ -961,7 +961,7 @@ function updateDrawHeldCat() {
 
 function updateDrawFreeCats() {
     for (let i = 0; i < cats.length; i++) {
-        const c = cats[i];
+        let c = cats[i];
         if (!c.isHeld()) {
             c.updateDraw();
         }
@@ -969,13 +969,13 @@ function updateDrawFreeCats() {
 }
 
 function generateCats() {
-    const speeds = [];
+    let speeds = [];
     for (let i = 0; i < catCount; i++) {
         speeds.push(map(i, 0, catCount - 1, 0.25, 0.75));
     }
     cats = [];
     for (let i = 0; i < catCount; i++) {
-        const speed = speeds[i];
+        let speed = speeds[i];
         cats.push(new Cat(speed));
     }
 }
@@ -1011,8 +1011,8 @@ function ease(p, g) {
 
 // used instead of dist for a performance boost
 function distSquared(x1, y1, x2, y2) {
-    const dx = x2 - x1;
-    const dy = y2 - y1;
+    let dx = x2 - x1;
+    let dy = y2 - y1;
     return dx * dx + dy * dy;
 }
 
@@ -1090,20 +1090,20 @@ class Cat {
 
     updateDrawDropAnimation() {
         // draw on the pg so that it's behind all of the cats that are on the cg
-        const dropAnimation = animateGrowth(this.dropAnimationStarted, this.dropAnimationDuration);
-        const alpha = 1 - dropAnimation;
+        let dropAnimation = animateGrowth(this.dropAnimationStarted, this.dropAnimationDuration);
+        let alpha = 1 - dropAnimation;
         if (alpha > 0) {
             pg.push();
             pg.translate(this.dropAnimationPos.x, this.dropAnimationPos.y);
             pg.strokeWeight(2);
             pg.stroke(grayscaleInteractiveHover);
-            const minRadius = 20;
-            const maxRadius = 50;
-            const r0 = lerp(minRadius, maxRadius, dropAnimation);
-            const r1 = lerp(minRadius, maxRadius, pow(dropAnimation, 0.5));
-            const rayCount = 16;
+            let minRadius = 20;
+            let maxRadius = 50;
+            let r0 = lerp(minRadius, maxRadius, dropAnimation);
+            let r1 = lerp(minRadius, maxRadius, pow(dropAnimation, 0.5));
+            let rayCount = 16;
             for (let i = 0; i < rayCount; i++) {
-                const theta = i * TAU / rayCount + QUARTER_PI;
+                let theta = i * TAU / rayCount + QUARTER_PI;
                 pg.line(r0 * cos(theta), r0 * sin(theta), r1 * cos(theta), r1 * sin(theta));
             }
             pg.pop();
@@ -1114,29 +1114,29 @@ class Cat {
         if (zenMode) {
             return;
         }
-        const insideTarget = isInsideTarget(this.pos.x, this.pos.y);
+        let insideTarget = isInsideTarget(this.pos.x, this.pos.y);
         if (!insideTarget && this.pInsideTarget) {
             this.exitTargetAnimationStarted = frameCount;
             this.exitTargetAnimationPos.x = this.pos.x;
             this.exitTargetAnimationPos.y = this.pos.y;
         }
         this.pInsideTarget = insideTarget;
-        const exitAnimation = animateGrowth(this.exitTargetAnimationStarted, this.exitTargetAnimationDuration);
-        const alpha = 1 - exitAnimation;
+        let exitAnimation = animateGrowth(this.exitTargetAnimationStarted, this.exitTargetAnimationDuration);
+        let alpha = 1 - exitAnimation;
         if (alpha > 0) {
             pg.push();
             pg.translate(this.exitTargetAnimationPos.x, this.exitTargetAnimationPos.y);
             pg.stroke(grayscaleWhite, alpha);
             pg.strokeWeight(3);
             pg.noFill();
-            const diameter = 120 * exitAnimation;
+            let diameter = 120 * exitAnimation;
             pg.ellipse(0, 0, diameter, diameter);
             pg.pop();
         }
     }
 
     updateCurrentImage() {
-        const frame = animateOscillation(this.timeOffset);
+        let frame = animateOscillation(this.timeOffset);
         this.currentImg = this.currentImage(frame);
     }
 
@@ -1159,11 +1159,11 @@ class Cat {
     }
 
     updateStance() {
-        const framesSinceStateLastChanged = frameCount - this.stanceChangedFrame;
+        let framesSinceStateLastChanged = frameCount - this.stanceChangedFrame;
         if (framesSinceStateLastChanged < this.stanceStableMinimumFrames) {
             return;
         }
-        const rand = random(1);
+        let rand = random(1);
         if (rand < 0.05) {
             // sit up or stand up
             this.stance--;
@@ -1178,7 +1178,7 @@ class Cat {
     }
 
     move() {
-        const speed = createVector();
+        let speed = createVector();
         if (this.isFacingRight()) {
             speed.x = 1;
         } else if (this.isFacingDown()) {
@@ -1205,7 +1205,7 @@ class Cat {
     }
 
     updateDirection() {
-        const framesSinceDirLastChanged = frameCount - this.dirChangedFrame;
+        let framesSinceDirLastChanged = frameCount - this.dirChangedFrame;
         if (framesSinceDirLastChanged < this.dirStableMinimumFrames) {
             return;
         }
@@ -1257,10 +1257,10 @@ class Cat {
 
     drawCatWrapAround() {
         cg.push();
-        const leftBorder = this.pos.x < this.size / 2;
-        const rightBorder = this.pos.x > width - this.size / 2;
-        const topBorder = this.pos.y < this.size / 2;
-        const bottomBorder = this.pos.y > height - this.size / 2;
+        let leftBorder = this.pos.x < this.size / 2;
+        let rightBorder = this.pos.x > width - this.size / 2;
+        let topBorder = this.pos.y < this.size / 2;
+        let bottomBorder = this.pos.y > height - this.size / 2;
         if (leftBorder) {
             this.drawCatAt(width, 0);
             if (topBorder) {
@@ -1359,7 +1359,7 @@ class Cat {
         let interactionWorldWrapTeleportY = 0;
         if (held === null && mouseIsPressed) {
             let isOverCatButAcrossTheScreen = false;
-            const isDirectlyOverCat = this.isOffsetMouseOverCat(0, 0);
+            let isDirectlyOverCat = this.isOffsetMouseOverCat(0, 0);
             if (!isDirectlyOverCat) {
                 isOverCatButAcrossTheScreen = true;
                 if (this.isOffsetMouseOverCat(width, 0)) {
@@ -1404,16 +1404,16 @@ class Cat {
     }
 
     checkCollisions() {
-        const repulsion = createVector();
+        let repulsion = createVector();
         for (let i = 0; i < cats.length; i++) {
-            const otherCat = cats[i];
+            let otherCat = cats[i];
             if (otherCat.id === this.id) {
                 continue;
             }
             if (!isPointInRectangle(otherCat.pos.x, otherCat.pos.y, this.pos.x - this.size, this.pos.y - this.size, this.size * 2, this.size * 2)) {
                 continue;
             }
-            const distanceToOther = distSquared(this.pos.x, this.pos.y, otherCat.pos.x, otherCat.pos.y);
+            let distanceToOther = distSquared(this.pos.x, this.pos.y, otherCat.pos.x, otherCat.pos.y);
             if (distanceToOther < this.interactionDistSquared * 2) {
                 if (this.isInSittingStance()) {
                     this.stance--;
@@ -1422,14 +1422,14 @@ class Cat {
             }
         }
         if (frameCount > this.dropAnimationStarted + this.dropAnimationDuration * 5) {
-            const mouseRepulsion = this.worldAwareMouseRepulsion();
+            let mouseRepulsion = this.worldAwareMouseRepulsion();
             repulsion.add(mouseRepulsion);
         }
         this.repulsionLerped.x = lerp(this.repulsionLerped.x, repulsion.x, 0.05);
         this.repulsionLerped.y = lerp(this.repulsionLerped.y, repulsion.y, 0.05);
         this.repulsionLerped.limit(10);
         if (this.repulsionLerped.mag() > 0.5) {
-            const heading = this.repulsionLerped.heading();
+            let heading = this.repulsionLerped.heading();
             if (heading < -PI * 0.75 || heading > PI * 0.75) {
                 this.setFacingLeft();
             } else if (abs(heading) < PI * 0.25) {
@@ -1444,7 +1444,7 @@ class Cat {
     }
 
     worldAwareMouseRepulsion() {
-        const mouseRepulsion = createVector();
+        let mouseRepulsion = createVector();
         mouseRepulsion.add(this.repulseVectorFrom(mouseX, mouseY));
         if (mouseRepulsion.x + mouseRepulsion.y <= 0.1) {
             mouseRepulsion.add(this.repulseVectorFrom(mouseX + width, mouseY));
@@ -1462,8 +1462,8 @@ class Cat {
     }
 
     repulseVectorFrom(x, y) {
-        const repulseVector = createVector();
-        const distanceToMouse = distSquared(this.pos.x, this.pos.y, x, y);
+        let repulseVector = createVector();
+        let distanceToMouse = distSquared(this.pos.x, this.pos.y, x, y);
         if (distanceToMouse < this.interactionDistSquared * 6) {
             if (this.isInSittingStance()) {
                 this.stance--;
@@ -1474,7 +1474,7 @@ class Cat {
     }
 
     addRepulsion(from, dist, maxDist, amp) {
-        const fromOtherToThis = p5.Vector.sub(this.pos, from);
+        let fromOtherToThis = p5.Vector.sub(this.pos, from);
         let repulsion = (1 / norm(dist, 0, maxDist)) * amp;
         repulsion = min(repulsion, 5);
         return fromOtherToThis.normalize().mult(repulsion);
