@@ -8,7 +8,7 @@ let pmouseIsPressed = false;
 let mouseIsInsidePolaroid = false;
 let useImageCursor;
 
-const grayscaleBackground = 0.15;
+const grayscaleBackground = .15;
 const grayscaleTarget = 0.225;
 const grayscaleInteractive = 0.35;
 const grayscaleInteractiveHover = 0.5;
@@ -113,6 +113,12 @@ let soundMouseClick;
 let configButtonsAnchor;
 let configButtonsRange;
 let configButtonsSize;
+
+let fpsSum = 0;
+let fpsAvg = 0;
+
+let pLoadingConditionsMet = false;
+let pCatsInsideTarget = false;
 
 // noinspection JSUnusedGlobalSymbols
 function preload() {
@@ -251,8 +257,6 @@ function updateDrawCats() {
     cg.pop();
 }
 
-let fpsSum = 0;
-let fpsAvg = 0;
 // noinspection JSUnusedGlobalSymbols
 function displayFPS() {
     fpsSum += frameRate();
@@ -729,9 +733,6 @@ function drawTarget() {
     pg.pop();
 }
 
-let pLoadingConditionsMet = false;
-let pCatsInsideTarget = false;
-
 function updatePolaroidButton() {
     const allCatsInsideTarget = areAllCatsInsideTarget();
     const loadingConditionsMet = allCatsInsideTarget && mouseIsInsidePolaroid;
@@ -1073,10 +1074,10 @@ class Cat {
                 this.move();
             }
             if (!this.isInSleepingStance()) {
-                // this.checkCollisions();
+                this.checkCollisions();
             }
         }
-        // this.drawCatExitsTargetIndicator();
+        this.drawCatExitsTargetIndicator();
         this.updateCurrentImage();
         this.draw();
     }
