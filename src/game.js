@@ -147,11 +147,12 @@ function loadAssets() {
     musicPlay = loadSound('assets\\sounds\\play_theme.mp3');
     musicWin = loadSound('assets\\sounds\\win_theme.mp3');
     musicWin.setVolume(0);
-    musicVolumeMax = .05;
+    musicPlay.setVolume(0);
+    musicVolumeMax = .15;
     soundPolaroidClick = loadSound('assets\\sounds\\switch2.wav');
-    soundPolaroidClick.setVolume(.2);
+    soundPolaroidClick.setVolume(.6);
     soundPolaroidWin = loadSound('assets\\sounds\\photo.ogg');
-    soundPolaroidWin.setVolume(.3);
+    soundPolaroidWin.setVolume(.9);
     soundMouseClick = loadSound('assets\\sounds\\click4.wav');
     // soundMouseClick has volume 1, needs to be heard
 }
@@ -188,7 +189,7 @@ function setup() {
     pg.rectMode(CENTER);
     pg.noSmooth();
     mouseVector = createVector();
-    polaroidPos = createVector(width - 200, height * .5);
+    polaroidPos = createVector(width - width * 0.15, height * .5);
     targetRectPos = createVector(width * .3, height * .5);
     targetRectSize = createVector(width * .4, height * .4);3
 
@@ -584,7 +585,7 @@ function drawWinMessage() {
 }
 
 function drawDownloadButton() {
-    if (updateDrawButton(width * .9, height * 0.9, 100, 100, null, 'jpg', 30)) {
+    if (updateDrawButton(polaroidPos.x, height * 0.9, height * .13, height * .13, null, 'jpg', 30)) {
         save('Cat_Catcher_' + lastWinCatCount + '_Cat' + (lastWinCatCount > 1 ? 's' : '') + '.jpg');
     }
 }
