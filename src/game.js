@@ -17,10 +17,10 @@ const grayscaleWhite = 1;
 const rectRoundedness = 100;
 
 let cats;
-const defaultCatCount = 99;
+const defaultCatCount = 7;
 let catCount = defaultCatCount;
 const catCountMinimum = 1;
-const catCountMaximum = 99;
+const catCountMaximum = 49;
 let lastWinCatCount = catCount;
 
 let winMessage;
