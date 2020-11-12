@@ -1,5 +1,21 @@
 p5.disableFriendlyErrors = true; // compute faster pls
 
+let defaultCatCount = 7;
+let catCountMinimum = 1;
+let catCountMaximum = 49;
+
+let donateEnabled = true; // only enable for itch.io or places that have donate buttons
+let displayDonatePleaConditionGamesStarted = 5;
+let gamesStarted = 0;
+let shouldDisplayDonatePleaNow = false;
+let donatePleaText = "";
+let donatePleaTextOptions = ["donate?\nplease?", "donate for\nmore games", "thanks for\nyour support"];
+
+let catCount = defaultCatCount;
+let lastWinCatCount = catCount;
+let cats;
+let allCatsInsideTarget;
+
 let mainCanvas;
 let pg;
 let cg;
@@ -16,12 +32,6 @@ let grayscaleBright = 0.75;
 let grayscaleWhite = 1;
 let rectRoundedness = 100;
 
-let cats;
-let defaultCatCount = 7;
-let catCount = defaultCatCount;
-let catCountMinimum = 1;
-let catCountMaximum = 49;
-let lastWinCatCount = catCount;
 
 let winMessage;
 let winningImageAngle;
@@ -43,8 +53,24 @@ let gameState = 'intro'; // known states: intro, play, win
 let pGameState = gameState;
 let zenMode = false;
 let introCatchphrase;
+let introCatchphraseList = [
+    'for your pleasure',
+    'you can do it',
+    'everyone loves cats',
+    'just like real life',
+    'cuteness overload',
+    'share this with your mom',
+    'no thoughts, head empty',
+    'free range cats',
+    'look at them go',
+    'how many can you catch?',
+    'get your warm fuzzies here'
+];
+
 let mouseVector;
 
+let targetRectPos;
+let targetRectSize;
 let polaroidDiameter = 200;
 let polaroidRadius = 100;
 let polaroidRadiusSquared = 10000;
@@ -53,6 +79,7 @@ let polaroidLoadingDuration = 120;
 let polaroidLoadingAnimationIncrementPerFrame = 1 / polaroidLoadingDuration;
 let polaroidLoadingAnimation = 0;
 let polaroidLoadingJustCompleted = false;
+let loadingConditionsMet;
 
 let repeatingMousePressStarted;
 let repeatingMousePressWaitDuration = 20;
@@ -60,15 +87,10 @@ let repeatingSpeed = 6;
 
 let bigRayGrowthDuration = 60;
 let bigRayGrowthStarted = -bigRayGrowthDuration * 2;
-
 let smallRayAnimationDuration = 60;
 let smallRayAnimationStarted = -smallRayAnimationDuration * 2;
-
 let rayRotationTime = 0;
 let rayCount = 12;
-
-let targetRectPos;
-let targetRectSize;
 
 let catCountInsideTargetJustFilled = false;
 let catCountInsideTarget = 0;
@@ -81,31 +103,28 @@ let sticksHeld;
 let catWalkDown;
 let catWalkRight;
 let catWalkUp;
-
-let polaroidIdle;
-let polaroidBlep;
-
-let title;
-let catTitle;
 let catSit;
 let catSleep;
-
+let catDonate;
+let polaroidIdle;
+let polaroidBlep;
+let title;
+let catTitle;
 let labelPlayButton;
 let labelAgainButton;
 let labelTutorialTakeAPhoto;
 let labelTutorialPutCatsHere;
 let labelTutorialBeQuick;
+let soundIcon;
+let musicIcon;
 
 let fontComicSans;
 
-let soundIcon;
-let musicIcon;
 let mutedSounds = false;
 let mutedMusic = true;
 let musicPlay;
 let musicWin;
 let musicVolumeMax;
-
 let soundPolaroidWin;
 let soundPolaroidClick;
 let soundMouseClick;
@@ -134,6 +153,7 @@ function loadAssets() {
     catWalkDown = [loadAsset("kitten-down-1.png"), loadAsset("kitten-down-2.png")];
     catWalkRight = [loadAsset("kitten-side-1.png"), loadAsset("kitten-side-2.png")];
     catWalkUp = [loadAsset("kitten-up-1.png"), loadAsset("kitten-up-2.png")];
+    catDonate = [loadAsset("donate-button-1.png"), loadAsset("donate-button-2.png")];
     title = loadAsset("_title_white.png");
     catTitle = [loadAsset("kitten-lie-1.png"), loadAsset("kitten-lie-2.png")];
     catSit = [loadAsset("kitten-sit-1.png"), loadAsset("kitten-sit-2.png")];
@@ -172,8 +192,9 @@ function loadAsset(localPath, successCallback) {
 function setup() {
     let idealWidth = 1366;
     let idealHeight = 768;
-    let scale = min(clamp(norm(windowWidth, 0, idealWidth), 0, 1), clamp(norm(windowHeight, 0, idealHeight), 0, 1));
-    scale = max(scale, 0.75);
+    // let scale = min(clamp(norm(windowWidth, 0, idealWidth), 0, 1), clamp(norm(windowHeight, 0, idealHeight), 0, 1));
+    // scale = max(scale, 0.75);
+    let scale = 1;
     mainCanvas = createCanvas(idealWidth * scale, idealHeight * scale);
     noSmooth();
     frameRate(60);
@@ -196,7 +217,6 @@ function setup() {
     polaroidPos = createVector(width - width * 0.15, height * 0.5);
     targetRectPos = createVector(width * 0.3, height * 0.5);
     targetRectSize = createVector(width * 0.4, height * 0.4);
-
     configButtonsAnchor = createVector(width * 0.075, height * 0.5);
     configButtonsRange = createVector(0, height * 0.125);
     configButtonsSize = width * 0.055;
@@ -225,7 +245,7 @@ function draw() {
             drawTutorial();
         }
         updateDrawCats();
-        pg.image(cg, width * 0.5, height * 0.5, width, height);
+        pg.image(cg, width * 0.5, height * 0.5);
     }
     if (onIntroScreen() || onWinScreen()) {
         updateDrawMuteButtons();
@@ -237,6 +257,7 @@ function draw() {
         updateDrawPlayButton(labelAgainButton);
         drawWinMessage();
         drawDownloadButton();
+        drawDonatePlea();
     }
     matchMusicToScreen();
     // displayFPS();
@@ -275,7 +296,7 @@ function displayFPS() {
 
 // noinspection JSUnusedGlobalSymbols
 function mousePressed() {
-    if (!zenMode && onPlayScreen() && polaroidLoadingAnimation >= 1 && mouseIsInsidePolaroid) {
+    if (!zenMode && onPlayScreen() && mouseIsInsidePolaroid && polaroidLoadingAnimation >= 1 && loadingConditionsMet && allCatsInsideTarget) {
         winGame();
     }
     pmouseIsPressed = false;
@@ -300,19 +321,7 @@ function keyPressed() {
 }
 
 function generateIntroCatchphrase() {
-    return introCatchphrase = random([
-        'for your pleasure',
-        'you can do it',
-        'everyone loves cats',
-        'just like real life',
-        'cuteness overload',
-        'share this with your mom',
-        'no thoughts, head empty',
-        'free range cats',
-        'look at them go',
-        'how many can you catch?',
-        'get your warm fuzzies here'
-    ]);
+    return introCatchphrase = random(introCatchphraseList);
 }
 
 function drawIntro() {
@@ -519,6 +528,25 @@ function updateDrawCatCountSettings() {
     pg.pop();
 }
 
+function drawDonatePlea() {
+    if(!shouldDisplayDonatePleaNow) {
+        return;
+    }
+    if(donatePleaText === "") {
+        donatePleaText = random(donatePleaTextOptions);
+    }
+    pg.push();
+    pg.tint((frameCount * 0.001)%1, .5, 1);
+    let img = catDonate[animateOscillation()];
+    pg.translate(configButtonsAnchor.x, height - img.height*.5);
+    pg.image(img, 0, 0);
+    pg.fill(grayscaleWhite);
+    pg.textAlign(CENTER, CENTER);
+    pg.textSize(30);
+    pg.text(donatePleaText, img.width, -height*.1);
+    pg.pop();
+}
+
 function updateDrawPlayButton(label) {
     let clicked = updateDrawButton(width * 0.5, height * 0.9, width * 0.22, height * 0.13, label[animateOscillation()], undefined, undefined, false);
     if (clicked) {
@@ -568,7 +596,6 @@ function updateDrawButton(x, y, w, h, labelImage, labelText, textScale, repeatin
         pg.noStroke();
         pg.fill(hover ? grayscaleWhite : grayscaleBright);
         pg.textAlign(CENTER, CENTER);
-        pg.textStyle(BOLD);
         pg.text(labelText, 0, -10);
     }
     pg.pop();
@@ -580,7 +607,6 @@ function drawWinMessage() {
     pg.fill(grayscaleWhite);
     pg.translate(width * 0.5, height * 0.1);
     pg.textAlign(CENTER, CENTER);
-    pg.textStyle(BOLD);
     pg.textSize(40);
     pg.text(winMessage, 0, 0)
     pg.pop();
@@ -734,8 +760,8 @@ function drawTarget() {
 }
 
 function updatePolaroidButton() {
-    let allCatsInsideTarget = areAllCatsInsideTarget();
-    let loadingConditionsMet = allCatsInsideTarget && mouseIsInsidePolaroid;
+    allCatsInsideTarget = areAllCatsInsideTarget();
+    loadingConditionsMet = allCatsInsideTarget && mouseIsInsidePolaroid;
     if (!pLoadingConditionsMet && loadingConditionsMet) {
         playSound(soundPolaroidClick);
     }
@@ -812,9 +838,6 @@ function drawPolaroidSmallRays() {
         let pointerX = pointerRadius * cos(theta);
         let pointerY = pointerRadius * sin(theta);
         pg.line(pointerX, pointerY, handleRadius * cos(theta), handleRadius * sin(theta));
-        // let arrowheadRadius = pointerRadius + extensionLength * .35 * growthAnimation;
-        // pg.line(pointerX, pointerY, arrowheadRadius * cos(theta+.05), arrowheadRadius * sin(theta+.05));
-        // pg.line(pointerX, pointerY, arrowheadRadius * cos(theta-.05), arrowheadRadius * sin(theta-.05));
     }
     pg.pop();
 }
@@ -907,6 +930,12 @@ function winGame() {
     winScrenStarted = frameCount;
     lastWinCatCount = catCount;
     winMessage = generateNewWinMessage(catCount);
+    if(donateEnabled && gamesStarted >= displayDonatePleaConditionGamesStarted) {
+        shouldDisplayDonatePleaNow = true;
+        donateEnabled = false;
+    }else {
+        shouldDisplayDonatePleaNow = false;
+    }
     catCount++;
     gameState = 'win';
 }
@@ -938,6 +967,7 @@ function generateNewWinMessage(n) {
 }
 
 function restartGame() {
+    gamesStarted++;
     generateCats();
     gameState = 'play';
 }
