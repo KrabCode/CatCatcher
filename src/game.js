@@ -191,7 +191,7 @@ function setup() {
     mouseVector = createVector();
     polaroidPos = createVector(width - width * 0.15, height * .5);
     targetRectPos = createVector(width * .3, height * .5);
-    targetRectSize = createVector(width * .4, height * .4);3
+    targetRectSize = createVector(width * .4, height * .4);
 
     configButtonsAnchor = createVector(width * .075, height * .5);
     configButtonsRange = createVector(0, height * .125);
