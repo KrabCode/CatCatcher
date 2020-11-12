@@ -1,0 +1,5 @@
+win_theme.mp3 and play_theme.mp3: https://opengameart.org/users/isao
+ - https://opengameart.org/content/funny-and-cute-acoustic-ending-theme
+ - https://opengameart.org/content/funny-and-cute-town-theme
+click4.wav, switch2.wav:   https://opengameart.org/content/51-ui-sound-effects-buttons-switches-and-clicks
+photo.ogg:	https://opengameart.org/content/camera
