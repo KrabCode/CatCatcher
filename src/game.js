@@ -9,7 +9,7 @@ let displayDonatePleaConditionGamesStarted = 5;
 let gamesStarted = 0;
 let shouldDisplayDonatePleaNow = false;
 let donatePleaText = "";
-let donatePleaTextOptions = ["donate?\nplease?", "donate for\nmore games", "thanks for\nyour support"];
+let donatePleaTextOptions = ["thanks for\ntesting\nour game"];
 
 let catCount = defaultCatCount;
 let lastWinCatCount = catCount;
@@ -49,12 +49,13 @@ let tutorialTakeAPhotoUnderstood = false;
 
 let imageScale = 1;
 let held = null;
-let gameState = 'intro'; // known states: intro, play, win
+let gameState = 'intro'; // known states: loading, intro, play, win
 let pGameState = gameState;
 let zenMode = false;
 let introCatchphrase;
 let introCatchphraseList = [
     'for your pleasure',
+    'it\'s ok to fail',
     'you can do it',
     'everyone loves cats',
     'just like real life',
@@ -139,34 +140,44 @@ let fpsAvg = 0;
 let pLoadingConditionsMet = false;
 let pCatsInsideTarget = false;
 
-// noinspection JSUnusedGlobalSymbols
-function preload() {
-    loadAssets();
+let loadingComplete = false;
+
+function loadImages() {
+    polaroidBlep = loadImageAsset("polaroid-blep.png");
+    polaroidIdle = loadImageAsset("polaroid-idle.png");
+    sticksHeld = loadImageAsset("chopsticks-hold.png");
+    sticksIdle = loadImageAsset("chopsticks-idle.png");
+    catHeld = loadImageAsset("kitten-held.png");
+    catWalkDown = [loadImageAsset("kitten-down-1.png"), loadImageAsset("kitten-down-2.png")];
+    catWalkRight = [loadImageAsset("kitten-side-1.png"), loadImageAsset("kitten-side-2.png")];
+    catWalkUp = [loadImageAsset("kitten-up-1.png"), loadImageAsset("kitten-up-2.png")];
+    catDonate = [loadImageAsset("donate-button-1.png"), loadImageAsset("donate-button-2.png")];
+    title = loadImageAsset("_title_white.png");
+    catTitle = [loadImageAsset("kitten-lie-1.png"), loadImageAsset("kitten-lie-2.png")];
+    catSit = [loadImageAsset("kitten-sit-1.png"), loadImageAsset("kitten-sit-2.png")];
+    catSleep = [loadImageAsset("kitten-slipp-1.png"), loadImageAsset("kitten-slipp-2.png")];
+    labelPlayButton = [loadImageAsset("button-play-1.png"), loadImageAsset("button-play-2.png")];
+    labelAgainButton = [loadImageAsset("button-again-1.png"), loadImageAsset("button-again-2.png")];
+    labelTutorialTakeAPhoto = loadImageAsset("tutorial-thentakeaphoto.png");
+    labelTutorialPutCatsHere = loadImageAsset("tutorial-putcatshere.png");
+    labelTutorialBeQuick = loadImageAsset("tutorial-bequick.png");
+    soundIcon = loadImageAsset("sound-icon-small.png");
+    musicIcon = loadImageAsset("music-icon-small.png");
+    fontComicSans = loadFont('assets\\comic_sans.ttf');
 }
 
-function loadAssets() {
-    polaroidBlep = loadAsset("polaroid-blep.png");
-    polaroidIdle = loadAsset("polaroid-idle.png");
-    sticksHeld = loadAsset("chopsticks-hold.png");
-    sticksIdle = loadAsset("chopsticks-idle.png");
-    catHeld = loadAsset("kitten-held.png");
-    catWalkDown = [loadAsset("kitten-down-1.png"), loadAsset("kitten-down-2.png")];
-    catWalkRight = [loadAsset("kitten-side-1.png"), loadAsset("kitten-side-2.png")];
-    catWalkUp = [loadAsset("kitten-up-1.png"), loadAsset("kitten-up-2.png")];
-    catDonate = [loadAsset("donate-button-1.png"), loadAsset("donate-button-2.png")];
-    title = loadAsset("_title_white.png");
-    catTitle = [loadAsset("kitten-lie-1.png"), loadAsset("kitten-lie-2.png")];
-    catSit = [loadAsset("kitten-sit-1.png"), loadAsset("kitten-sit-2.png")];
-    catSleep = [loadAsset("kitten-slipp-1.png"), loadAsset("kitten-slipp-2.png")];
-    labelPlayButton = [loadAsset("button-play-1.png"), loadAsset("button-play-2.png")];
-    labelAgainButton = [loadAsset("button-again-1.png"), loadAsset("button-again-2.png")];
-    labelTutorialTakeAPhoto = loadAsset("tutorial-thentakeaphoto.png");
-    labelTutorialPutCatsHere = loadAsset("tutorial-putcatshere.png");
-    labelTutorialBeQuick = loadAsset("tutorial-bequick.png");
-    soundIcon = loadAsset("sound-icon-small.png");
-    musicIcon = loadAsset("music-icon-small.png");
-    fontComicSans = loadFont('assets\\comic_sans.ttf');
+function loadImageAsset(localPath, successCallback) {
+    if (successCallback === null) {
+        return loadImage("assets\\images\\" + localPath);
+    }
+    return loadImage("assets\\images\\" + localPath, successCallback);
+}
 
+function preload() {
+    loadImages();
+}
+
+function loadSounds() {
     soundFormats('mp3', 'ogg', 'wav');
     musicPlay = loadSound('assets\\sounds\\play_theme.mp3');
     musicWin = loadSound('assets\\sounds\\win_theme.mp3');
@@ -174,18 +185,10 @@ function loadAssets() {
     musicPlay.setVolume(0);
     musicVolumeMax = 0.15;
     soundPolaroidClick = loadSound('assets\\sounds\\switch2.wav');
-    soundPolaroidClick.setVolume(0.6);
+    soundPolaroidClick.setVolume(0.4);
     soundPolaroidWin = loadSound('assets\\sounds\\photo.ogg');
-    soundPolaroidWin.setVolume(0.9);
+    soundPolaroidWin.setVolume(0.6);
     soundMouseClick = loadSound('assets\\sounds\\click4.wav');
-    // soundMouseClick has volume 1, needs to be heard
-}
-
-function loadAsset(localPath, successCallback) {
-    if (successCallback === null) {
-        return loadImage("assets\\images\\" + localPath);
-    }
-    return loadImage("assets\\images\\" + localPath, successCallback);
 }
 
 // noinspection JSUnusedGlobalSymbols
@@ -220,6 +223,7 @@ function setup() {
     configButtonsAnchor = createVector(width * 0.075, height * 0.5);
     configButtonsRange = createVector(0, height * 0.125);
     configButtonsSize = width * 0.055;
+    loadSounds();
 }
 
 // noinspection JSUnusedGlobalSymbols
@@ -259,8 +263,10 @@ function draw() {
         drawDownloadButton();
         drawDonatePlea();
     }
-    matchMusicToScreen();
+    // shouldDisplayDonatePleaNow = true;
+    // drawDonatePlea();
     // displayFPS();
+    matchMusicToScreen();
     pg.pop();
     image(pg, 0, 0, width, height);
     pmouseIsPressed = mouseIsPressed;
@@ -453,6 +459,7 @@ function updateDrawZenToggle() {
     pg.noFill();
     let isMouseOver = isPointInRectangle(mouseX, mouseY, x - w * 0.5, y - w * 0.5, w, w)
     if (isMouseOver) {
+        cursor('POINTER');
         if (mouseIsPressed && !pmouseIsPressed) {
             zenMode = !zenMode;
         }
@@ -510,7 +517,6 @@ function updateDrawCatCountSettings() {
     pg.fill(grayscaleWhite);
     pg.textAlign(CENTER, CENTER);
     pg.textSize(30);
-
     let count = catCount;
     if (onWinScreen() && frameCount < winScrenStarted + newspaperAnimationDuration) {
         count = lastWinCatCount; // display win count for a brief moment to give the +1 change more impact
@@ -536,14 +542,13 @@ function drawDonatePlea() {
         donatePleaText = random(donatePleaTextOptions);
     }
     pg.push();
-    pg.tint((frameCount * 0.001)%1, .5, 1);
     let img = catDonate[animateOscillation()];
     pg.translate(configButtonsAnchor.x, height - img.height*.5);
     pg.image(img, 0, 0);
-    pg.fill(grayscaleWhite);
-    pg.textAlign(CENTER, CENTER);
+    pg.fill(grayscaleBright);
+    pg.textAlign(LEFT, CENTER);
     pg.textSize(30);
-    pg.text(donatePleaText, img.width, -height*.1);
+    pg.text(donatePleaText, img.width * 0.75, -img.height * .5);
     pg.pop();
 }
 
