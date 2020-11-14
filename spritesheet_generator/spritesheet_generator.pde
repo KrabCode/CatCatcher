@@ -72,7 +72,7 @@ String translateFilenameToVariableName(String name){
      case "tutorial-bequick.png": return "labelTutorialBeQuick";
      case "sound-icon-small.png": return "soundIcon";
      case "music-icon-small.png": return "musicIcon";
-     default: return "UNKNOWN";
+     default: return "UNKNOWN " + name;
   }
 }
 
