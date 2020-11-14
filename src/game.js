@@ -942,7 +942,7 @@ function nextWinningImageAngle() {
 
 function generateNewWinMessage(n) {
     let newWinMessage = 'You win!\n';
-    if (n >= 25) {
+    if (n >= 20) {
         newWinMessage += random([
             'Impressive! You got all ' + n + ' cats.',
             'Amazing! You got all ' + n + ' cats.',
@@ -952,6 +952,7 @@ function generateNewWinMessage(n) {
             'You caught ' + n + ' fidgety cats on camera!',
             'You took a photo of ' + n + ' mischievous cats!',
             'You photographed ' + n + ' restless cats!',
+            'You snapped ' + n + ' unruly kittens!',
             'You managed to herd ' + n + ' rowdy kittens!',
         ]);
     } else if (n === 1) {
@@ -997,7 +998,7 @@ function updateDrawFreeCats() {
 function generateCats() {
     let speeds = [];
     for (let i = 0; i < catCount; i++) {
-        speeds.push(map(i, 0, catCount - 1, 0.25, 0.75));
+        speeds.push(map(i, 0, catCount - 1, 0.25, 0.8));
     }
     cats = [];
     for (let i = 0; i < catCount; i++) {
