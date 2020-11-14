@@ -137,40 +137,35 @@ let fpsAvg = 0;
 let pLoadingConditionsMet = false;
 let pCatsInsideTarget = false;
 
-function loadImages() {
-    polaroidBlep = loadImageAsset("polaroid-blep.png");
-    polaroidIdle = loadImageAsset("polaroid-idle.png");
-    sticksHeld = loadImageAsset("chopsticks-hold.png");
-    sticksIdle = loadImageAsset("chopsticks-idle.png");
-    catHeld = loadImageAsset("kitten-held.png");
-    catWalkDown = [loadImageAsset("kitten-down-1.png"), loadImageAsset("kitten-down-2.png")];
-    catWalkRight = [loadImageAsset("kitten-side-1.png"), loadImageAsset("kitten-side-2.png")];
-    catWalkUp = [loadImageAsset("kitten-up-1.png"), loadImageAsset("kitten-up-2.png")];
-    catDonate = [loadImageAsset("donate-button-1.png"), loadImageAsset("donate-button-2.png")];
-    title = loadImageAsset("_title_white.png");
-    catTitle = [loadImageAsset("kitten-lie-1.png"), loadImageAsset("kitten-lie-2.png")];
-    catSit = [loadImageAsset("kitten-sit-1.png"), loadImageAsset("kitten-sit-2.png")];
-    catSleep = [loadImageAsset("kitten-slipp-1.png"), loadImageAsset("kitten-slipp-2.png")];
-    labelPlayButton = [loadImageAsset("button-play-1.png"), loadImageAsset("button-play-2.png")];
-    labelAgainButton = [loadImageAsset("button-again-1.png"), loadImageAsset("button-again-2.png")];
-    labelTutorialTakeAPhoto = loadImageAsset("tutorial-thentakeaphoto.png");
-    labelTutorialPutCatsHere = loadImageAsset("tutorial-putcatshere.png");
-    labelTutorialBeQuick = loadImageAsset("tutorial-bequick.png");
-    soundIcon = loadImageAsset("sound-icon-small.png");
-    musicIcon = loadImageAsset("music-icon-small.png");
-    fontComicSans = loadFont('assets\\comic_sans.ttf');
-}
-
-function loadImageAsset(localPath, successCallback) {
-    if (successCallback === null) {
-        return loadImage("assets\\images\\" + localPath);
-    }
-    return loadImage("assets\\images\\" + localPath, successCallback);
-}
+let sprites;
 
 // noinspection JSUnusedGlobalSymbols
 function preload() {
-    loadImages();
+    sprites = loadImage("assets\\spritesheet.png", loadImagesFromSpritesheet);
+    fontComicSans = loadFont('assets\\comic_sans.ttf');
+}
+
+function loadImagesFromSpritesheet() {
+    labelAgainButton = [sprites.get(0.0,0.0,144,30), sprites.get(144.0,0.0,144,30)];
+    labelPlayButton = [sprites.get(288.0,0.0,116,30), sprites.get(404.0,0.0,116,30)];
+    sticksHeld = sprites.get(520.0,0.0,90,66);
+    sticksIdle = sprites.get(610.0,0.0,90,66);
+    catDonate = [sprites.get(0.0,66.0,100,100), sprites.get(100.0,66.0,100,100)];
+    catWalkDown = [sprites.get(200.0,66.0,62,62), sprites.get(262.0,66.0,62,62)];
+    catHeld = sprites.get(324.0,66.0,62,62);
+    catTitle = [sprites.get(386.0,66.0,62,62), sprites.get(448.0,66.0,62,62)];
+    catWalkRight = [sprites.get(510.0,66.0,62,62), sprites.get(572.0,66.0,62,62)];
+    catSit = [sprites.get(634.0,66.0,62,62), sprites.get(0.0,166.0,62,62)];
+    catSleep = [sprites.get(62.0,166.0,62,62), sprites.get(124.0,166.0,62,62)];
+    catWalkUp = [sprites.get(186.0,166.0,62,62), sprites.get(248.0,166.0,62,62)];
+    musicIcon = sprites.get(310.0,166.0,44,44);
+    polaroidBlep = sprites.get(354.0,166.0,89,84);
+    polaroidIdle = sprites.get(443.0,166.0,89,84);
+    soundIcon = sprites.get(532.0,166.0,44,44);
+    labelTutorialBeQuick = sprites.get(0.0,250.0,240,30);
+    labelTutorialPutCatsHere = sprites.get(240.0,250.0,330,30);
+    labelTutorialTakeAPhoto = sprites.get(0.0,280.0,450,30);
+    title = sprites.get(0.0,310.0,443,122);
 }
 
 function loadSounds() {
