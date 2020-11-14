@@ -10,6 +10,21 @@ let gamesStarted = 0;
 let shouldDisplayDonatePleaNow = false;
 let donatePleaText = "";
 let donatePleaTextOptions = ["thanks for\ntesting\nour game"];
+let introCatchphrase;
+let introCatchphraseList = [
+    'for your pleasure',
+    'it\'s ok to fail',
+    'you can do it',
+    'everyone loves cats',
+    'just like real life',
+    'cuteness overload',
+    'share this with your mom',
+    'no thoughts, head empty',
+    'free range cats',
+    'look at them go',
+    'how many can you catch?',
+    'get your warm fuzzies here'
+];
 
 let catCount = defaultCatCount;
 let lastWinCatCount = catCount;
@@ -23,7 +38,6 @@ let cg;
 let pmouseIsPressed = false;
 let mouseIsInsidePolaroid = false;
 let useImageCursor;
-
 let grayscaleBackground = .15;
 let grayscaleTarget = 0.225;
 let grayscaleInteractive = 0.35;
@@ -31,7 +45,6 @@ let grayscaleInteractiveHover = 0.5;
 let grayscaleBright = 0.75;
 let grayscaleWhite = 1;
 let rectRoundedness = 100;
-
 
 let winMessage;
 let winningImageAngle;
@@ -52,24 +65,8 @@ let held = null;
 let gameState = 'intro'; // known states: loading, intro, play, win
 let pGameState = gameState;
 let zenMode = false;
-let introCatchphrase;
-let introCatchphraseList = [
-    'for your pleasure',
-    'it\'s ok to fail',
-    'you can do it',
-    'everyone loves cats',
-    'just like real life',
-    'cuteness overload',
-    'share this with your mom',
-    'no thoughts, head empty',
-    'free range cats',
-    'look at them go',
-    'how many can you catch?',
-    'get your warm fuzzies here'
-];
 
 let mouseVector;
-
 let targetRectPos;
 let targetRectSize;
 let polaroidDiameter = 200;
@@ -140,8 +137,6 @@ let fpsAvg = 0;
 let pLoadingConditionsMet = false;
 let pCatsInsideTarget = false;
 
-let loadingComplete = false;
-
 function loadImages() {
     polaroidBlep = loadImageAsset("polaroid-blep.png");
     polaroidIdle = loadImageAsset("polaroid-idle.png");
@@ -173,6 +168,7 @@ function loadImageAsset(localPath, successCallback) {
     return loadImage("assets\\images\\" + localPath, successCallback);
 }
 
+// noinspection JSUnusedGlobalSymbols
 function preload() {
     loadImages();
 }
