@@ -143,6 +143,7 @@ let sprites;
 function preload() {
     sprites = loadImage("assets\\spritesheet.png", loadImagesFromSpritesheet);
     fontComicSans = loadFont('assets\\comic_sans.ttf');
+    loadSounds();
 }
 
 function loadImagesFromSpritesheet() {
@@ -170,16 +171,16 @@ function loadImagesFromSpritesheet() {
 
 function loadSounds() {
     soundFormats('mp3', 'ogg', 'wav');
-    musicPlay = loadSound('assets\\sounds\\play_theme.mp3');
-    musicWin = loadSound('assets\\sounds\\win_theme.mp3');
+    musicPlay = loadSound('assets\\play_theme.mp3');
+    musicWin = loadSound('assets\\win_theme.mp3');
     musicWin.setVolume(0);
     musicPlay.setVolume(0);
     musicVolumeMax = 0.15;
-    soundPolaroidClick = loadSound('assets\\sounds\\switch2.wav');
+    soundPolaroidClick = loadSound('assets\\switch2.wav');
     soundPolaroidClick.setVolume(0.4);
-    soundPolaroidWin = loadSound('assets\\sounds\\photo.ogg');
+    soundPolaroidWin = loadSound('assets\\photo.ogg');
     soundPolaroidWin.setVolume(0.6);
-    soundMouseClick = loadSound('assets\\sounds\\click4.wav');
+    soundMouseClick = loadSound('assets\\click4.wav');
 }
 
 // noinspection JSUnusedGlobalSymbols
@@ -214,7 +215,6 @@ function setup() {
     configButtonsAnchor = createVector(width * 0.075, height * 0.5);
     configButtonsRange = createVector(0, height * 0.125);
     configButtonsSize = width * 0.055;
-    loadSounds();
 }
 
 // noinspection JSUnusedGlobalSymbols
