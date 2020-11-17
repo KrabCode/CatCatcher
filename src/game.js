@@ -9,7 +9,7 @@ let displayDonatePleaConditionGamesStarted = 5;
 let gamesStarted = 0;
 let shouldDisplayDonatePleaNow = false;
 let donatePleaText = "";
-let donatePleaTextOptions = ["thanks for\ntesting\nour game"];
+let donatePleaTextOptions = ["please support us\nwith a few coins"];
 let introCatchphrase;
 let introCatchphraseList = [
     'for your pleasure',
@@ -254,8 +254,8 @@ function draw() {
         drawDownloadButton();
         drawDonatePlea();
     }
-    // shouldDisplayDonatePleaNow = true;
-    // drawDonatePlea();
+    shouldDisplayDonatePleaNow = true;
+    drawDonatePlea();
     // displayFPS();
     matchMusicToScreen();
     pg.pop();
@@ -536,10 +536,14 @@ function drawDonatePlea() {
     let img = catDonate[animateOscillation()];
     pg.translate(configButtonsAnchor.x, height - img.height*.5);
     pg.image(img, 0, 0);
-    pg.fill(grayscaleBright);
-    pg.textAlign(LEFT, CENTER);
+    pg.noStroke();
+    pg.fill(grayscaleTarget);
+    pg.translate(img.width * 2, -img.height * .5);
+    pg.rect(0, 0, 260, 80, 10);
+    pg.fill(grayscaleWhite);
+    pg.textAlign(CENTER, CENTER);
     pg.textSize(30);
-    pg.text(donatePleaText, img.width * 0.75, -img.height * .5);
+    pg.text(donatePleaText, 0, -7);
     pg.pop();
 }
 
