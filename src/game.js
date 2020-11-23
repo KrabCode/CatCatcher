@@ -254,7 +254,7 @@ function draw() {
     }
     // shouldDisplayDonatePleaNow = true;
     // drawDonatePlea();
-    // displayFPS();
+    displayFPS();
     matchMusicToScreen();
     pg.pop();
     image(pg, 0, 0, width, height);
@@ -678,12 +678,9 @@ function labelByDifficulty() {
     } else if (catCount < 45) {
         return 'crazy cat lady';
     } else if (catCount < 55) {
-        return 'cat shelter';
-    } else if (catCount < 65) {
         return 'catastrophy';
-    } else {
-        return 'impossible';
     }
+    return "impossible"
 }
 
 function drawTutorial() {
@@ -865,14 +862,19 @@ function playSound(sound, varyingPitch) {
         return;
     }
     if(varyingPitch) {
-        sound.rate(random(.6, 1.4));
+        let rate = randomGaussian(1, 0.15);
+        rate = constrain(rate, 0.5, 1.5);
+        sound.rate(rate);
     }
     sound.play();
 }
 
-function animateGrowth(start, duration) {
+function animateGrowth(start, duration, power) {
     let animation = animate(start, duration);
-    return clamp(pow(animation, 0.25), 0, 1); // juicy numbers
+    if(power) {
+        return clamp(pow(animation, power), 0, 1);
+    }
+    return clamp(pow(animation, 0.25), 0, 1);
 }
 
 function animate(start, duration) {
@@ -1090,7 +1092,7 @@ class Cat {
         this.exitTargetAnimationPos = createVector();
         this.flipHorizontally = false;
 
-        this.dropAnimationDuration = 30;
+        this.dropAnimationDuration = 35;
         this.dropAnimationStarted = -this.dropAnimationDuration * 2;
         this.dropAnimationPos = createVector();
         this.repulsionLerped = createVector();
@@ -1124,17 +1126,18 @@ class Cat {
 
     updateDrawDropAnimation() {
         // draw on the pg so that it's behind all of the cats that are on the cg
-        let dropAnimation = animateGrowth(this.dropAnimationStarted, this.dropAnimationDuration);
+        let dropAnimation = animateGrowth(this.dropAnimationStarted, this.dropAnimationDuration, 0.35);
         let alpha = 1 - dropAnimation;
         if (alpha > 0) {
             pg.push();
             pg.translate(this.dropAnimationPos.x, this.dropAnimationPos.y);
-            pg.strokeWeight(2);
-            pg.stroke(grayscaleInteractiveHover);
-            let minRadius = 20;
+            pg.stroke(grayscaleBright, alpha);
+            pg.strokeWeight(3);
+            let minRadius = 10;
             let maxRadius = 50;
+            let rayLength = 5;
             let r0 = lerp(minRadius, maxRadius, dropAnimation);
-            let r1 = lerp(minRadius, maxRadius, pow(dropAnimation, 0.5));
+            let r1 = lerp(minRadius, maxRadius, dropAnimation) + rayLength;
             let rayCount = 16;
             for (let i = 0; i < rayCount; i++) {
                 let theta = i * TAU / rayCount + QUARTER_PI;
