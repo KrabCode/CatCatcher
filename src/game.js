@@ -9,7 +9,7 @@ let displayDonatePleaConditionGamesStarted = 5;
 let gamesStarted = 0;
 let shouldDisplayDonatePleaNow = false;
 let donatePleaText = "";
-let donatePleaTextOptions = ["please support us\nwith a few coins"];
+let donatePleaTextOptions = ["if you like our game\nplease support us\nwith a few coins"];
 let introCatchphrase;
 let introCatchphraseList = [
     'for your pleasure',
@@ -122,7 +122,7 @@ let mutedSounds = false;
 let mutedMusic = true;
 let musicPlay;
 let musicWin;
-let musicVolumeMax;
+let musicVolumeMax = .25;
 let soundPolaroidWin;
 let soundPolaroidClick;
 let soundMouseClick;
@@ -175,12 +175,10 @@ function loadSounds() {
     musicWin = loadSound('assets\\win_theme.mp3');
     musicWin.setVolume(0);
     musicPlay.setVolume(0);
-    musicVolumeMax = 0.15;
     soundPolaroidClick = loadSound('assets\\switch2.wav');
-    soundPolaroidClick.setVolume(0.4);
     soundPolaroidWin = loadSound('assets\\photo.ogg');
-    soundPolaroidWin.setVolume(0.6);
-    soundMouseClick = loadSound('assets\\click4.wav');
+    soundMouseClick = loadSound('assets\\klick7.wav');
+    soundMouseClick.setVolume(0.25);
 }
 
 // noinspection JSUnusedGlobalSymbols
@@ -254,8 +252,8 @@ function draw() {
         drawDownloadButton();
         drawDonatePlea();
     }
-    shouldDisplayDonatePleaNow = true;
-    drawDonatePlea();
+    // shouldDisplayDonatePleaNow = true;
+    // drawDonatePlea();
     // displayFPS();
     matchMusicToScreen();
     pg.pop();
@@ -298,7 +296,7 @@ function mousePressed() {
     }
     pmouseIsPressed = false;
     mouseIsPressed = true;
-    playSound(soundMouseClick);
+    playSound(soundMouseClick, true);
 }
 
 // noinspection JSUnusedGlobalSymbols
@@ -390,7 +388,7 @@ function updateDrawMuteButtons() {
     if (updateDrawButton(x, y0, w, w, soundIcon, mutedSounds ? '         x' : '         o', 36)) {
         mutedSounds = !mutedSounds;
         if (!mutedSounds) {
-            playSound(soundMouseClick);
+            playSound(soundMouseClick, true);
         }
     }
     let y1 = configButtonsAnchor.y;
@@ -535,15 +533,17 @@ function drawDonatePlea() {
     pg.push();
     let img = catDonate[animateOscillation()];
     pg.translate(configButtonsAnchor.x, height - img.height*.5);
-    pg.image(img, 0, 0);
+    pg.push();
     pg.noStroke();
     pg.fill(grayscaleTarget);
-    pg.translate(img.width * 2, -img.height * .5);
-    pg.rect(0, 0, 260, 80, 10);
+    pg.translate(img.width * 1.8, -img.height * .5);
+    pg.rect(0, 0, 290, 140, 10);
     pg.fill(grayscaleWhite);
     pg.textAlign(CENTER, CENTER);
     pg.textSize(30);
     pg.text(donatePleaText, 0, -7);
+    pg.pop();
+    pg.image(img, 0, 0);
     pg.pop();
 }
 
@@ -860,9 +860,12 @@ function drawPolaroidBigRays() {
     }
 }
 
-function playSound(sound) {
+function playSound(sound, varyingPitch) {
     if (mutedSounds) {
         return;
+    }
+    if(varyingPitch) {
+        sound.rate(random(.6, 1.4));
     }
     sound.play();
 }
@@ -978,7 +981,7 @@ function drop() {
         held.startDropAnimation();
         held.repulsionLerped.x = 0;
         held.repulsionLerped.y = 0;
-        // playSound(soundDropCat);
+        playSound(soundMouseClick, true);
     }
     held = null;
 }
