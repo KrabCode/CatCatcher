@@ -110,9 +110,9 @@ let title;
 let catTitle;
 let labelPlayButton;
 let labelAgainButton;
-let labelTutorialTakeAPhoto;
+let labelTutorialPrepareTheCamera;
 let labelTutorialPutCatsHere;
-let labelTutorialBeQuick;
+let labelTutorialClick;
 let soundIcon;
 let musicIcon;
 
@@ -163,9 +163,9 @@ function loadImagesFromSpritesheet() {
     polaroidBlep = sprites.get(354.0,166.0,89,84);
     polaroidIdle = sprites.get(443.0,166.0,89,84);
     soundIcon = sprites.get(532.0,166.0,44,44);
-    labelTutorialBeQuick = sprites.get(0.0,250.0,240,30);
-    labelTutorialPutCatsHere = sprites.get(240.0,250.0,330,30);
-    labelTutorialTakeAPhoto = sprites.get(0.0,280.0,450,30);
+    labelTutorialClick = sprites.get(0.0,250.0,160,30);
+    labelTutorialPrepareTheCamera = sprites.get(160.0,250.0,500,30);
+    labelTutorialPutCatsHere = sprites.get(0.0,280.0,330,30);
     title = sprites.get(0.0,310.0,443,122);
 }
 
@@ -177,6 +177,7 @@ function loadSounds() {
     musicPlay.setVolume(0);
     soundPolaroidClick = loadSound('assets\\switch2.wav');
     soundPolaroidWin = loadSound('assets\\photo.ogg');
+    soundPolaroidWin.setVolume(0.5);
     soundMouseClick = loadSound('assets\\klick7.wav');
     soundMouseClick.setVolume(0.25);
 }
@@ -694,9 +695,13 @@ function drawTutorial() {
         pg.image(labelTutorialPutCatsHere, targetRectPos.x, targetRectPos.y);
     }
     if (!tutorialTakeAPhotoUnderstood) {
-        pg.tint(0.5);
-        pg.image(labelTutorialTakeAPhoto, polaroidPos.x - polaroidDiameter * 0.5, polaroidPos.y + polaroidDiameter * 1.1);
-        pg.image(labelTutorialBeQuick, polaroidPos.x - polaroidDiameter * 0.5, polaroidPos.y + polaroidDiameter * 1.25);
+        pg.tint(0.6, 1 - tutorialPutCatsHereAlpha);
+        pg.image(labelTutorialPrepareTheCamera, polaroidPos.x - polaroidDiameter * 0.5, polaroidPos.y + polaroidDiameter * 1.1);
+
+        if(polaroidLoadingAnimation >= 1) {
+            pg.tint(0.75);
+            pg.image(labelTutorialClick, polaroidPos.x, polaroidPos.y - polaroidDiameter * 1.1);
+        }
     }
     pg.pop();
 }

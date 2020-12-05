@@ -69,6 +69,8 @@ String translateFilenameToVariableName(String name){
      case "button-again-1.png": return "labelAgainButton";
      case "tutorial-thentakeaphoto.png": return "labelTutorialTakeAPhoto";
      case "tutorial-putcatshere.png": return "labelTutorialPutCatsHere";
+     case "tutorial-preparethecamera.png": return "labelTutorialPrepareTheCamera";
+     case "tutorial-click.png": return "labelTutorialClick";
      case "tutorial-bequick.png": return "labelTutorialBeQuick";
      case "sound-icon-small.png": return "soundIcon";
      case "music-icon-small.png": return "musicIcon";
