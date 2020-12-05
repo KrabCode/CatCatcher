@@ -253,9 +253,7 @@ function draw() {
         drawDownloadButton();
         drawDonatePlea();
     }
-    // shouldDisplayDonatePleaNow = true;
-    // drawDonatePlea();
-    displayFPS();
+    // displayFPS();
     matchMusicToScreen();
     pg.pop();
     image(pg, 0, 0, width, height);
