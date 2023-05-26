@@ -257,6 +257,7 @@ function draw() {
     matchMusicToScreen();
     pg.pop();
     image(pg, 0, 0, width, height);
+    text("" + getFrameRate(),20,20);
     pmouseIsPressed = mouseIsPressed;
 }
 
@@ -939,7 +940,7 @@ function winGame() {
     lastWinCatCount = catCount;
     winMessage = generateNewWinMessage(catCount);
     if(donateEnabled && gamesStarted >= displayDonatePleaConditionGamesStarted) {
-        shouldDisplayDonatePleaNow = true;
+        shouldDisplayDonatePleaNow = false; // never display donate plea
         donateEnabled = false;
     }else {
         shouldDisplayDonatePleaNow = false;
