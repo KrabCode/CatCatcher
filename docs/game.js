@@ -23,7 +23,8 @@ let introCatchphraseList = [
     'free range cats',
     'look at them go',
     'how many can you catch?',
-    'get your warm fuzzies here'
+    'get your warm fuzzies here',
+    'brain cells = 0'
 ];
 
 let catCount = defaultCatCount;
@@ -62,7 +63,11 @@ let tutorialTakeAPhotoUnderstood = false;
 
 let imageScale = 1;
 let held = null;
-let gameState = 'intro'; // known states: loading, intro, play, win
+let STATE_INTRO = 'intro';
+let STATE_PLAY = 'play';
+let STATE_WIN = 'win';
+
+let gameState = STATE_INTRO;
 let pGameState = gameState;
 let zenMode = false;
 
@@ -146,6 +151,7 @@ function preload() {
     loadSounds();
 }
 
+//
 function loadImagesFromSpritesheet() {
     labelAgainButton = [sprites.get(0.0,0.0,144,30), sprites.get(144.0,0.0,144,30)];
     labelPlayButton = [sprites.get(288.0,0.0,116,30), sprites.get(404.0,0.0,116,30)];
@@ -257,7 +263,7 @@ function draw() {
     matchMusicToScreen();
     pg.pop();
     image(pg, 0, 0, width, height);
-    text("" + getFrameRate(),20,20);
+    // text("" + getFrameRate(),20,20);
     pmouseIsPressed = mouseIsPressed;
 }
 
@@ -310,7 +316,7 @@ function keyPressed() {
     if (keyCode === ESCAPE) {
         if (onPlayScreen() || onWinScreen()) {
             generateIntroCatchphrase();
-            gameState = 'intro';
+            gameState = STATE_INTRO;
         }
     }
 }
@@ -416,10 +422,10 @@ function updateDrawMuteButtons() {
 }
 
 function matchMusicToScreen() {
-    if (pGameState !== 'win' && onWinScreen()) {
+    if (pGameState !== STATE_WIN && onWinScreen()) {
         musicPlay.fade(0, 2);
         musicWin.fade(musicVolumeMax, 2);
-    } else if (pGameState !== 'play' && onPlayScreen()) {
+    } else if (pGameState !== STATE_PLAY && onPlayScreen()) {
         musicPlay.fade(musicVolumeMax, 2);
         musicWin.fade(0, 2);
     }
@@ -427,15 +433,15 @@ function matchMusicToScreen() {
 }
 
 function onIntroScreen() {
-    return gameState === 'intro';
+    return gameState === STATE_INTRO;
 }
 
 function onPlayScreen() {
-    return gameState === 'play';
+    return gameState === STATE_PLAY;
 }
 
 function onWinScreen() {
-    return gameState === 'win';
+    return gameState === STATE_WIN;
 }
 
 function updateDrawZenToggle() {
@@ -645,7 +651,7 @@ function drawWinningImage() {
 }
 
 function drawAutomaticDifficultyIncrementAnimation(buttonDistance) {
-    if (gameState !== 'win') {
+    if (gameState !== STATE_WIN) {
         return;
     }
     let difficultyAnimationStarted = winScrenStarted + newspaperAnimationDuration;
@@ -946,7 +952,7 @@ function winGame() {
         shouldDisplayDonatePleaNow = false;
     }
     catCount++;
-    gameState = 'win';
+    gameState = STATE_WIN;
 }
 
 function nextWinningImageAngle() {
@@ -979,7 +985,7 @@ function generateNewWinMessage(n) {
 function restartGame() {
     gamesStarted++;
     generateCats();
-    gameState = 'play';
+    gameState = STATE_PLAY;
 }
 
 function drop() {
