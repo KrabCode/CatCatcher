@@ -7,10 +7,11 @@ void setup() {
   pg.save("spritesheet.png");
   background(120);
   image(pg, 0, 0);
+  exit();
 }
 
 void generate(){
-  String[] names = listFileNames("E:\\p5\\CatCatcher\\spritesheet_generator\\data");
+  String[] names = listFileNames(dataPath(""));
   float x = 0;
   float y = 0;
   float furthestRight = 0;
@@ -81,7 +82,8 @@ String translateFilenameToVariableName(String name){
 String[] listFileNames(String dir) {
   File file = new File(dir);
   if (file.isDirectory()) {
-    String names[] = file.list();
+    String[] names = file.list();
+    java.util.Arrays.sort(names);
     return names;
   }
   return null;
